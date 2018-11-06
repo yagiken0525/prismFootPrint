@@ -249,3 +249,54 @@ bool Model::readModelWithColor(string filename, cv::Scalar color){
         return false;
     }
 }
+
+void Model::loadFrom4DcvMat(cv::Mat pointsMat) {
+    for (int i = 0; i < pointsMat.cols; i++) {
+        cv::Point3f pt(pointsMat.at<float>(i, 0),
+                       pointsMat.at<float>(i, 1),
+                       pointsMat.at<float>(i, 2)
+        );
+        this->vertices.push_back(pt);
+    }
+}
+
+void Model::savePly(string saveFilePath){
+    //plyfile出力
+    cout << "[outputting ply file]:" << endl;
+
+    //header
+    string file_name;
+    file_name = saveFilePath;
+
+    ofstream outputfile(file_name);
+    outputfile << "ply" << endl;
+    outputfile << "format ascii 1.0" << endl;
+    outputfile << "comment VCGLIB generated" << endl;
+    outputfile << "element vertex " + to_string(this->vertices.size()) << endl;
+    outputfile << "property float x" << endl;
+    outputfile << "property float y" << endl;
+    outputfile << "property float z" << endl;
+    outputfile << "property uchar red" << endl;
+    outputfile << "property uchar green" << endl;
+    outputfile << "property uchar blue" << endl;
+    outputfile << "property uchar alpha" << endl;
+    outputfile << "element face 0" << endl;
+    outputfile << "property list uchar int vertex_indices" << endl;
+    outputfile << "end_header" << endl;
+
+    for (int i = 0; i < this->vertices.size(); i++){
+
+        outputfile  << this->vertices[i].x << " "
+                    << this->vertices[i].y << " "
+                    << this->vertices[i].z << " "
+                    << 255 << " "
+                    << 255 << " "
+                    << 255 << " "
+                    << 255 << endl;
+
+
+    }
+
+    outputfile.close();
+    cout << "ply correctly exported" << endl;
+}

@@ -8,6 +8,7 @@
 #include <iostream>
 #include <vector>
 #include <opencv2/core/types.hpp>
+#include <opencv2/opencv.hpp>
 
 class Model {
 public:
@@ -19,6 +20,8 @@ public:
     bool readModelWithColor(std::string filename, cv::Scalar color);
     bool readTranslationModel(std::string filename);
     bool readVertixModel(std::string filename);
+    void loadFrom4DcvMat(cv::Mat points);
+    void savePly(std::string saveFilePath);
 
     struct Face{
         std::vector<int> verticies;

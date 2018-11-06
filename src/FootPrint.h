@@ -7,6 +7,7 @@
 
 #include "pointCloud/Model.h"
 #include "image/ImageInfo.h"
+#include "camera/Camera.h"
 #include <opencv2/opencv.hpp>
 #include <iostream>
 #include <vector>
@@ -22,25 +23,51 @@ public:
         _project_name = project_name;
         _data_path = "../Data/";
         _projects_path = _data_path + "Projects/" + _project_name + "/";
+        _video_path = _data_path + "Projects/" + _project_name + "/videos/";
+        _openPose_path = _data_path + "Projects/" + _project_name + "/openPoseData/";
+        _camera_path = _data_path + "Projects/" + _project_name + "/Camera/";
         _sfm_projects_path = "/home/yagi/sfmDR/projects/" + _project_name + "/";
     };
     ~FootPrint(){};
 
+    class CameraInfo {
+    public:
+        std::vector<ImageInfo> imageList;
+        Camera camera;
+    };
+
+    std::vector<FootPrint::CameraInfo> CameraInfoList;
+
     //しきい値
     float DIST_RANGE = 30; // 画像投影点の内どれくらいの距離の点を接地点とみなすか
     int VOTE_RANGE = 5; // 何投票されたら接地点とみなすか
+    int CAMERA_NUM = 3; // 接地カメラの個数
+    int CAMERA_FIRST_ID = 3; // 接地カメラの個数
+    std::string VIDEO_TYPE = "MP4"; // 接地カメラの個数
     bool FACE_PLY = false; // 出力をメッシュファイルにするかどうか
+    int IMAGE_WIDTH = 1920; // 出力をメッシュファイルにするかどうか
+    int IMAGE_HEIGHT = 1080; // 出力をメッシュファイルにするかどうか
 
     std::string _project_name;
     std::string _data_path;
     std::string _projects_path;
+    std::string _video_path;
+    std::string _openPose_path;
+    std::string _camera_path;
     std::string _sfm_projects_path;
 
-    int loadCameraParam(std::string file_name);
-    int loadImages(std::string file_name);
-    int loadMultipleCameraRts(std::string file_name);
-    int loadOpenPoseData(std::string file_name);
-    int trackTargetPerson();
+    void videoToImage();
+    void detectHumanPose();
+    void loadAllCameraParam();
+    void loadIntrinsicCameraParam();
+    void loadExtrinsicCameraParam();
+    void loadProjectionMatrix();
+    void estimateCameraPose();
+
+    int loadImages(std::string file_name, std::vector<ImageInfo>* imageInfoList);
+    int loadMultipleCameraRts(std::string file_name, std::vector<ImageInfo>* imageInfoList);
+    int loadOpenPoseData(std::string file_name, std::vector<ImageInfo>* imageInfoList);
+    int trackTargetPerson(std::vector<ImageInfo>* imageInfoList);
     int findFootPrint();
     int paintFootPrint();
     int savePointClouds();
@@ -52,6 +79,9 @@ public:
     void printVoteRecord();
     void votedFrameInit();
     void calculateSteppedFrame(int i);
+    void reconstruct3Dpose();
+    void estimateGroundPlane(cv::Mat points);
+    void estimateStepPositions();
 
 
     cv::Point3f imagePointTo3dPoint(cv::Point2f point);
@@ -74,7 +104,7 @@ public:
     std::vector<Vote> LvoteRecord;
 private:
 
-    std::vector<ImageInfo> image_infos;
+    std::vector<std::vector<ImageInfo>> image_lists_list;
     std::set<int> rightFootPrintID;
     std::set<int> leftFootPrintID;
     std::vector<float> cameraParam;

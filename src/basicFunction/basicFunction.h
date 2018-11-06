@@ -45,6 +45,8 @@ namespace yagi {
     template<typename Point>
     float calcDistance(Point p1, Point p2);
 
+    void loadImage(std::string imagePath, std::vector<cv::Mat>* imageList);
+
 
 
 

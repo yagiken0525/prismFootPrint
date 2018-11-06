@@ -12,38 +12,34 @@
 
 class Camera {
 public:
+    int loadCameraA(std::string file_name);
     int loadCameraRt(std::string file_name);
+    int loadCameraP(std::string file_name);
+    int outputRt(std::string file_name);
+    int outputP(std::string file_name);
 
-    void setR(std::vector<float>  R){
-        _R = R;
-    }
-    void setT(cv::Point3f T){
-        _T = T;
-    }
-    void setId(int id){
-        _id = id;
-    }
-    std::vector<float> getR(){
-        return _R;
-    }
-    cv::Point3f getT(){
-        return _T;
-    }
-//    cv::Mat getT(){
-//        return _T;
-//    }
-    int getId(){
-        return _id;
-    }
-    int _id;
-    std::vector<float> _R;
-    cv::Mat R_inv;
-    cv::Point3f _T;
-//    cv::Mat _R = cv::Mat::zeros(3, 3, CV_64F);
-//    cv::Mat _T = cv::Mat::zeros(1, 3, CV_64F);
+    void setR(cv::Mat R){ _R = R; }
+    void setT(cv::Mat T){ _T = T; }
+    void setA(cv::Mat A){ _A = A; }
+    void setP(cv::Mat P){ _P = P; }
+    void setDist(cv::Mat dist){ _dist = dist; }
+    cv::Mat getR(){ return _R; }
+    cv::Mat getT(){ return _T; }
+    cv::Mat getA(){ return _A; }
+    cv::Mat getP(){ return _P; }
+    cv::Mat getDist(){ return _dist; }
 
+    cv::Point2f focalPoint;
+    cv::Point2f centerPoint;
+    cv::Point2f radialDistortion;
+    cv::Point2f translateDistortion;
 
 private:
+    cv::Mat _R = cv::Mat::zeros(3,3,CV_32F);
+    cv::Mat _T = cv::Mat::zeros(3,3,CV_32F);
+    cv::Mat _A = cv::Mat::zeros(3,3,CV_32F);
+    cv::Mat _P = cv::Mat::zeros(4,3,CV_32F);
+    cv::Mat _dist = cv::Mat::zeros(1,4,CV_32F);
 
 };
 

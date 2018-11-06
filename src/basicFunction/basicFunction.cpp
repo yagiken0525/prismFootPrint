@@ -58,6 +58,20 @@ void yagi::setColor(vector<cv::Scalar> *colors) {
 
 }
 
+void yagi::loadImage(string imagePath, vector<cv::Mat>* imageList){
+    std::ifstream ifs(imagePath);
+    std::string str;
+    if (ifs.fail())
+    {
+        std::cerr << "ファイル読み込み失敗" << std::endl;
+    }
+    while (getline(ifs, str))
+    {
+        imageList->push_back(cv::imread(str));
+    }
+}
+
+
 
 cv::Mat yagi::maskAofB(cv::Mat A, cv::Mat B) {
     cv::Mat dst;

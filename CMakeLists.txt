@@ -2,7 +2,7 @@
 cmake_minimum_required(VERSION 3.5.1 FATAL_ERROR)
 
 #project name ${PROJECT_NAME}で参照可能
-project(sfmDR_footPrint)
+project(prism_FootPrint)
 
 #出力情報を増やして cmake デバッグしやすくします。
 set(CMAKE_VERBOSE_MAKEFILE 1)
@@ -30,9 +30,33 @@ if (${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
             )
 endif()
 
+find_package(GFlags)
+find_package(Glog)
+find_package(OpenPose REQUIRED)
 include(OpenCV)
+include(OpenMVG)
+include_directories(${OpenPose_INCLUDE_DIRS} ${GFLAGS_INCLUDE_DIR} ${GLOG_INCLUDE_DIR} ${OpenCV_INCLUDE_DIRS})
+
 add_subdirectory(src/basicFunction)
-set(SOURCE_FILES src/main.cpp src/pointCloud/Model.cpp src/pointCloud/Model.h src/camera/Camera.cpp src/camera/Camera.h src/FootPrint.cpp src/FootPrint.h src/openPose/OpenPosePerson.cpp src/openPose/OpenPosePerson.h src/image/ImageInfo.cpp src/image/ImageInfo.h src/basicFunction/k_means/k_means.cpp src/basicFunction/k_means/k_means.h)
+add_subdirectory(src/camera)
+add_subdirectory(src/image)
+add_subdirectory(src/openPose)
+add_subdirectory(src/pointCloud)
+add_subdirectory(src/videoToImage)
+add_subdirectory(src/reconstruction)
+set(SOURCE_FILES src/main.cpp src/FootPrint.cpp src/FootPrint.h src/openMVG/OpenMVG.cpp src/openMVG/OpenMVG.h src/reconstruction/Reconstruction.cpp src/reconstruction/Reconstruction.h)
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})
 target_link_libraries(${PROJECT_NAME} basicFunc)
+target_link_libraries(${PROJECT_NAME} Reconstruction)
+target_link_libraries(${PROJECT_NAME} Camera)
+target_link_libraries(${PROJECT_NAME} ImageInfo)
+target_link_libraries(${PROJECT_NAME} Openpose)
+target_link_libraries(${PROJECT_NAME} VideoToImage)
+target_link_libraries(${PROJECT_NAME} OpenMVG)
+target_link_libraries(${PROJECT_NAME} PointCloud)
 target_link_libraries(${PROJECT_NAME} ${OpenCV_LIBS})
+target_link_libraries(${PROJECT_NAME} ${OpenMVG_LIBS})
+#message(STATUS "OpenMVG_DIR: ${OpenMVG_LIBS}")
+
+target_link_libraries(${PROJECT_NAME} ${OpenPose_LIBS} ${GFLAGS_LIBRARY} ${GLOG_LIBRARY})
+
