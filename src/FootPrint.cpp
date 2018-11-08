@@ -433,7 +433,7 @@ void FootPrint::findFootPrintFromCameraInfo(CameraInfo& cam) {
     cout << cv::Mat(cam.camera._Tvec) << endl;
     cout << cam.camera._dist << endl;
 
-    vector<cv::Point2d> projPoints;
+    vector<cv::Point2f> projPoints;
     cv::projectPoints(this->model.vertices, cv::Mat(cam.camera._Rvec), cv::Mat(cam.camera._Tvec), cam.camera._A, cam.camera._dist, projPoints);
 //    cam.projPoints = projPoints;
     int frame_num = 0;

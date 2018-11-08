@@ -34,7 +34,7 @@ public:
     public:
         std::vector<ImageInfo> imageList;
         Camera camera;
-        std::vector<cv::Point2d> projPoints;
+        std::vector<cv::Point2f> projPoints;
     };
 
     class ModelInfo : public Model {
