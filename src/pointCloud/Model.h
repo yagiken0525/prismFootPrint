@@ -21,6 +21,7 @@ public:
     bool readTranslationModel(std::string filename);
     bool readVertixModel(std::string filename);
     void loadFrom4DcvMat(cv::Mat points);
+//    void loadFrom3DpointsVector(std::vector<cv::Point3f> points);
     void savePly(std::string saveFilePath);
 
     struct Face{

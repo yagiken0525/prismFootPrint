@@ -12,6 +12,13 @@
 
 class Camera {
 public:
+    Camera(){
+        _R = cv::Mat::zeros(3,3,CV_64F);
+        _T = cv::Mat::zeros(3,3,CV_64F);
+        _A = cv::Mat::zeros(3,3,CV_64F);
+        _P = cv::Mat::zeros(3,4,CV_64F);
+        _dist = cv::Mat::zeros(1,4,CV_64F);
+    };
     int loadCameraA(std::string file_name);
     int loadCameraRt(std::string file_name);
     int loadCameraP(std::string file_name);
@@ -29,17 +36,19 @@ public:
     cv::Mat getP(){ return _P; }
     cv::Mat getDist(){ return _dist; }
 
-    cv::Point2f focalPoint;
-    cv::Point2f centerPoint;
-    cv::Point2f radialDistortion;
-    cv::Point2f translateDistortion;
+    int camID;
+    cv::Point2d focalPoint;
+    cv::Point2d centerPoint;
+    cv::Point2d radialDistortion;
+    cv::Point2d translateDistortion;
 
-private:
-    cv::Mat _R = cv::Mat::zeros(3,3,CV_32F);
-    cv::Mat _T = cv::Mat::zeros(3,3,CV_32F);
-    cv::Mat _A = cv::Mat::zeros(3,3,CV_32F);
-    cv::Mat _P = cv::Mat::zeros(4,3,CV_32F);
-    cv::Mat _dist = cv::Mat::zeros(1,4,CV_32F);
+    cv::Mat _R = cv::Mat::zeros(3,3,CV_64F);
+    cv::Mat _T = cv::Mat::zeros(3,3,CV_64F);
+    cv::Mat _A = cv::Mat::zeros(3,3,CV_64F);
+    cv::Mat _P = cv::Mat::zeros(3,4,CV_64F);
+    cv::Mat _dist = cv::Mat::zeros(1,4,CV_64F);
+    cv::Vec3d _Tvec;
+    cv::Vec3d _Rvec;
 
 };
 

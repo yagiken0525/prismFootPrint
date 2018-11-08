@@ -5,33 +5,39 @@ using namespace std;
 
 int main() {
     FootPrint footPrint("test");
-    footPrint.DIST_RANGE = 10; // 画像投影点の内どれくらいの距離の点を接地点とみなすか
+    footPrint.DIST_RANGE = 50; // 画像投影点の内どれくらいの距離の点を接地点とみなすか
     footPrint.VOTE_RANGE = 8; // 何投票されたら接地点とみなすか
+    footPrint.FRAME_RANGE = 15; // 連続何フレームで検索するか
     footPrint.CAMERA_NUM = 3; // 接地カメラ個数
     footPrint.CAMERA_FIRST_ID = 10; // 接地カメラID
+    footPrint.LOAD_LIMIT = 5; // 接地カメラID
     footPrint.VIDEO_TYPE = ".MP4"; // 動画拡張子
 
-    footPrint.FACE_PLY = true; // 出力をメッシュファイルにするかどうか
+    //カメラパラメータの初期化
+    footPrint.cameraInfoInit();
+    footPrint.loadAllCameraParam();
+
 
     //動画から画像への変換
-    footPrint.videoToImage();
+//    footPrint.videoToImage();
 
     //OpenPoseによる検出
-    footPrint.detectHumanPose();
+//    footPrint.detectHumanPose();
 
     //カメラ位置姿勢推定
-    footPrint.loadIntrinsicCameraParam();
-    footPrint.estimateCameraPose();
+    //footPrint.estimateCameraPose();
 
-    //３次元復元
-    footPrint.reconstruct3Dpose();
+    //床平面のplyファイル作成
+//    footPrint.generatePlaneModel();
 
     //足あとの検出
-    footPrint.loadAllCameraParam();
     footPrint.estimateStepPositions();
 
 
 
+    //３次元復元
+//    footPrint.loadAllImages();
+//    footPrint.reconstruct3Dpose();
 //    }else if(command == "ESTIMATE_STEP_POINTS"){
 //    } if(1){
 //        footPrint.model.readModel(footPrint._sfm_projects_path + "scene_mesh.ply");

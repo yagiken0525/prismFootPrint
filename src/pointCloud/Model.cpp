@@ -38,20 +38,18 @@ bool Model::readModel(string filename){
         if(buf == "end_header")
             break;
     }
-    if(vertices_num==0 || faces_num==0){
+    if(vertices_num==0 && faces_num==0){
         return false;
     }
     std::getline(ifs,buf);
-    this->vertices.resize(vertices_num);
 
     vector<string> vertex;
     vector<string> face;
     for(i= 0;i<vertices_num;i++){
         std::getline(ifs,buf);
         vertex = yagi::split(buf, ' ');
-        this->vertices[i].x = stof(vertex[0]);
-        this->vertices[i].y = stof(vertex[1]);
-        this->vertices[i].z = stof(vertex[2]);
+        cv::Point3f pt(stof(vertex[0]), stof(vertex[1]), stof(vertex[2]));
+        this->vertices.push_back(pt);
     }
     faces.resize(faces_num);
     for(i= 0;i<faces_num;i++){
@@ -259,6 +257,7 @@ void Model::loadFrom4DcvMat(cv::Mat pointsMat) {
         this->vertices.push_back(pt);
     }
 }
+
 
 void Model::savePly(string saveFilePath){
     //plyfile出力

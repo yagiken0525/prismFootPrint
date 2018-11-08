@@ -47,6 +47,8 @@ namespace yagi {
 
     void loadImage(std::string imagePath, std::vector<cv::Mat>* imageList);
 
+    void generatePointClouds(std::vector<cv::Point3f>& objectCorners, int H, int W, float SCALE);
+
 
 
 

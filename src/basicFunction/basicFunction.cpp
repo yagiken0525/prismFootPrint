@@ -71,6 +71,14 @@ void yagi::loadImage(string imagePath, vector<cv::Mat>* imageList){
     }
 }
 
+void yagi::generatePointClouds(std::vector<cv::Point3f>& objectCorners, int H, int W, float SCALE){
+    for (int i = 0; i < H; i++) {
+        for (int j = 0; j < W; j++) {
+            objectCorners.push_back(cv::Point3f(j * SCALE, i * SCALE, 0.0f));
+        }
+    }
+};
+
 
 
 cv::Mat yagi::maskAofB(cv::Mat A, cv::Mat B) {
@@ -131,8 +139,8 @@ float yagi::distPoint2Line(cv::Point2f pt, float a, float b){
 
 template<typename Point>
 float yagi::calc2PointDistance(Point p1, Point p2) {
-    int x_dist = pow((p1.x - p2.x), 2);
-    int y_dist = pow((p1.y - p2.y), 2);
+    float x_dist = pow((p1.x - p2.x), 2);
+    float y_dist = pow((p1.y - p2.y), 2);
     float distance = sqrt((x_dist + y_dist));
     return distance;
 }
