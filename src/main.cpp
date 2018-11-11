@@ -5,13 +5,17 @@ using namespace std;
 
 int main() {
     FootPrint footPrint("test");
-    footPrint.DIST_RANGE = 50; // 画像投影点の内どれくらいの距離の点を接地点とみなすか
+    footPrint.DIST_RANGE = 300; // 画像投影点の内どれくらいの距離の点を接地点とみなすか
     footPrint.VOTE_RANGE = 8; // 何投票されたら接地点とみなすか
     footPrint.FRAME_RANGE = 15; // 連続何フレームで検索するか
     footPrint.CAMERA_NUM = 3; // 接地カメラ個数
     footPrint.CAMERA_FIRST_ID = 10; // 接地カメラID
     footPrint.LOAD_LIMIT = 5; // 接地カメラID
     footPrint.VIDEO_TYPE = ".MP4"; // 動画拡張子
+    footPrint.ORIGINAL_IMAGE_WIDTH = 1920; // 出力をメッシュファイルにするかどうか
+    footPrint.ORIGINAL_IMAGE_HEIGHT = 1080; // 出力をメッシュファイルにするかどうか
+    footPrint.IMAGE_WIDTH = 640; // 出力をメッシュファイルにするかどうか
+    footPrint.IMAGE_HEIGHT = 320; // 出力をメッシュファイルにするかどうか
 
     //カメラパラメータの初期化
     footPrint.cameraInfoInit();
@@ -25,7 +29,8 @@ int main() {
 //    footPrint.detectHumanPose();
 
     //カメラ位置姿勢推定
-    //footPrint.estimateCameraPose();
+    footPrint.model.readModel(footPrint._projects_path + "planePoints.ply");
+//    footPrint.estimateCameraPose();
 
     //床平面のplyファイル作成
 //    footPrint.generatePlaneModel();

@@ -420,75 +420,95 @@ int FootPrint::clickLegPoint(vector<ImageInfo>& imageInfoList){
     cv::destroyAllWindows();
 }
 
-void FootPrint::findFootPrintFromCameraInfo(CameraInfo& cam) {
+void FootPrint::voting() {
 
-    //床点群を再投影
-    cout << this->model.vertices.size() << endl;
-    cout << cam.camera._A.type() << endl;
-    cout << cv::Mat(cam.camera._Rvec).type() << endl;
-    cout << cv::Mat(cam.camera._Tvec).type() << endl;
-    cout << cam.camera._dist.type() << endl;
-    cout << cam.camera._A << endl;
-    cout << cv::Mat(cam.camera._Rvec) << endl;
-    cout << cv::Mat(cam.camera._Tvec) << endl;
-    cout << cam.camera._dist << endl;
-
-    vector<cv::Point2f> projPoints;
-    cv::projectPoints(this->model.vertices, cv::Mat(cam.camera._Rvec), cv::Mat(cam.camera._Tvec), cam.camera._A, cam.camera._dist, projPoints);
-//    cam.projPoints = projPoints;
-    int frame_num = 0;
     int frameNum = this->CameraInfoList[0].imageList.size();
-    //投票
-    for(ImageInfo im : cam.imageList){
-        for (OpenPosePerson person: im.persons) {
-            if (person.humanID == 1) {
-                float dist;
 
-                //右足の投票
-                cv::Point2f RlegPt = person.getBodyCoord()[13];
-                RlegPt.x /=(640/im.image.cols);
-                RlegPt.y /=(320/im.image.rows);
+    for (CameraInfo cm : this->CameraInfoList) {
+        for (cv::Point2f pt : cm.projPoints) {
+            vector<bool> LlegVote;
+            vector<bool> RlegVote;
+            for (ImageInfo im : cm.imageList) {
+                for (OpenPosePerson person: im.persons) {
+                    if (person.humanID == 1) {
+                        float dist;
 
-                //左足の投票
-                cv::Point2f LlegPt = person.getBodyCoord()[10];
-                LlegPt.x *=(640/im.image.cols);
-                LlegPt.y *=(320/im.image.rows);
+                        //右足の投票
+                        cv::Point2f RlegPt = person.getBodyCoord()[13];
+                        RlegPt.x /= (640 / im.image.cols);
+                        RlegPt.y /= (320 / im.image.rows);
 
-                for(cv::Point2f pt : projPoints) {
+                        //左足の投票
+                        cv::Point2f LlegPt = person.getBodyCoord()[10];
+                        LlegPt.x *= (640 / im.image.cols);
+                        LlegPt.y *= (320 / im.image.rows);
 
-                    dist = yagi::calc2PointDistance(pt, LlegPt);
-                    if (dist < this->DIST_RANGE && dist != 0.0) {
-                        this->model.votelist[cam.camera.camID][1][frame_num] = true;
-                    }
+                        dist = yagi::calc2PointDistance(pt, LlegPt);
+                        if ((dist < this->DIST_RANGE) && (dist != 0.0)) {
+                            LlegVote.push_back(true);
+                        } else {
+                            LlegVote.push_back(false);
+                        }
 
-                    dist = yagi::calc2PointDistance(pt, RlegPt);
-                    if (dist < this->DIST_RANGE && dist != 0.0) {
-                        this->model.votelist[cam.camera.camID][0][frame_num] = true;
+                        dist = yagi::calc2PointDistance(pt, RlegPt);
+                        if ((dist < this->DIST_RANGE) && (dist != 0.0)) {
+                            RlegVote.push_back(true);
+                        } else {
+                            RlegVote.push_back(false);
+                        }
                     }
                 }
             }
+            VoteList voteList;
+            voteList.LlegVote = LlegVote;
+            voteList.RlegVote = RlegVote;
+            this->CameraInfoList[cm.camera.camID].voteOfEachPointList.push_back(voteList);
         }
     }
+}
 
-    //投票の集計
-    for(int i = 0; i < this->model.vertices.size(); i++){
-        for(int camID = 0; camID < this->CAMERA_FIRST_ID; camID++){
-            for(int legID = 0; legID < 2; legID++){
-                vector<bool> voteList = this->model.votelist[cam.camera.camID][legID];
-                for(int frameID = 0; frameID < frameNum; frameID++){
-                    if((frameID > FRAME_RANGE / 2) && (frameID < frameNum + (FRAME_RANGE / 2))) {
-                        int votePt = 0;
-                        for (int voteID = 0; voteID < VOTE_RANGE; voteID++) {
-                            if(voteList[voteID])
-                                votePt++;
+void FootPrint::countVotes(){
+    int IMAGE_NUM = this->CameraInfoList[0].imageList.size();
+    for (CameraInfo cm : this->CameraInfoList) {
+        for (int ptID = 0; ptID < cm.projPoints.size(); ptID++) {
+            for (int legID = 0; legID < 2; legID++) {
+                vector<bool> ifStepped;
+                vector<bool> voteList;
+                if (legID == 0) {
+                    voteList = cm.voteOfEachPointList[ptID].LlegVote;
+                    for (int frameID = 0; frameID < IMAGE_NUM; frameID++) {
+                        if ((frameID > FRAME_RANGE / 2) && (frameID < IMAGE_NUM + (FRAME_RANGE / 2))) {
+                            int votePt = 0;
+                            for (int voteID = 0; voteID < VOTE_RANGE; voteID++) {
+                                if (voteList[voteID])
+                                    votePt++;
+                            }
+                            if (votePt > VOTE_RANGE)
+                                ifStepped.push_back(true);
+                            else
+                                ifStepped.push_back(false);
                         }
-                        if(votePt > VOTE_RANGE)
-                            this->model.ifSteped[camID][legID] = true;
                     }
+                    this->CameraInfoList[cm.camera.camID].voteOfEachPointList[ptID].LifStepped = ifStepped;
+                }else {
+                    voteList = cm.voteOfEachPointList[ptID].RlegVote;
+                    for (int frameID = 0; frameID < IMAGE_NUM; frameID++) {
+                        if ((frameID > FRAME_RANGE / 2) && (frameID < IMAGE_NUM + (FRAME_RANGE / 2))) {
+                            int votePt = 0;
+                            for (int voteID = 0; voteID < VOTE_RANGE; voteID++) {
+                                if (voteList[voteID])
+                                    votePt++;
+                            }
+                            if (votePt > VOTE_RANGE)
+                                ifStepped.push_back(true);
+                            else
+                                ifStepped.push_back(false);
+                        }
+                    }
+                    this->CameraInfoList[cm.camera.camID].voteOfEachPointList[ptID].RifStepped = ifStepped;
                 }
             }
         }
-
     }
 }
 
@@ -524,11 +544,11 @@ int FootPrint::findFootPrint(vector<ImageInfo>& imageInfoList, Camera cam){
                 if(frame_num > 0) {
                     for (int id: leftLegAreaID) {
                         this->left_vote[id] += 1;
-                        LvoteRecord[id].frameNum.push_back(frame_num);
+//                        LvoteRecord[id].frameNum.push_back(frame_num);
                     }
                     for (int id: rightLegAreaID) {
                         this->right_vote[id] += 1;
-                        RvoteRecord[id].frameNum.push_back(frame_num);
+//                        RvoteRecord[id].frameNum.push_back(frame_num);
                     }
                 }
             }
@@ -748,56 +768,60 @@ int FootPrint::savePointClouds(){
 }
 
 int FootPrint::paintFootPrint() {
+    for (CameraInfo cm : this->CameraInfoList) {
+        string camName = "cam" + to_string(cm.camera.camID + 1);
+        for(int legID = 0; legID < 2; legID++) {
 
-    //plyfile出力
-    cout << "[outputting ply file]:" << endl;
+            //plyfile出力
+            cout << "[outputting ply file]:" << endl;
 
-    //header
-    string file_name;
-    file_name= this->_projects_path + "/result/result_point.ply";
+            //header
+            string file_name;
+            file_name= this->_projects_path + "/results/" + camName + to_string(legID) + ".ply";
 
-    ofstream outputfile(file_name);
-    outputfile << "ply" << endl;
-    outputfile << "format ascii 1.0" << endl;
-    outputfile << "comment VCGLIB generated" << endl;
-    outputfile << "element vertex " + to_string(this->model.vertices_num) << endl;
-    outputfile << "property float x" << endl;
-    outputfile << "property float y" << endl;
-    outputfile << "property float z" << endl;
-    outputfile << "property uchar red" << endl;
-    outputfile << "property uchar green" << endl;
-    outputfile << "property uchar blue" << endl;
-    outputfile << "property uchar alpha" << endl;
-    outputfile << "element face 0" << endl;
-    outputfile << "property list uchar int vertex_indices" << endl;
-    outputfile << "end_header" << endl;
+            ofstream outputfile(file_name);
+            outputfile << "ply" << endl;
+            outputfile << "format ascii 1.0" << endl;
+            outputfile << "comment VCGLIB generated" << endl;
+            outputfile << "element vertex " + to_string(this->model.vertices_num) << endl;
+            outputfile << "property float x" << endl;
+            outputfile << "property float y" << endl;
+            outputfile << "property float z" << endl;
+            outputfile << "property uchar red" << endl;
+            outputfile << "property uchar green" << endl;
+            outputfile << "property uchar blue" << endl;
+            outputfile << "property uchar alpha" << endl;
+            outputfile << "element face 0" << endl;
+            outputfile << "property list uchar int vertex_indices" << endl;
+            outputfile << "end_header" << endl;
+            for (int i = 0; i < this->model.vertices.size(); i++) {
+                for(int imID = 0; imID < cm.imageList.size(); imID++){
 
-    for (int i = 0; i < this->model.vertices.size(); i++) {
-        for (int camID = 0; camID < this->CAMERA_NUM; camID++) {
-            for(int legID = 0; legID < 2; legID++) {
-
-                //投票で接地判定
-                if (this->model.ifSteped[camID][legID]) {
-                    outputfile << to_string(this->model.vertices[i].x) << " "
-                               << to_string(this->model.vertices[i].y) << " "
-                               << to_string(this->model.vertices[i].z) << " "
-                               << 0 << " "
-                               << 0 << " "
-                               << (legID * 128) + 127 << " "
-                               << 255 << endl;
-                } else {
-                    outputfile << this->model.vertices[i].x << " "
-                               << this->model.vertices[i].y << " "
-                               << this->model.vertices[i].z << " "
-                               << 255 << " "
-                               << 255 << " "
-                               << 255 << " "
-                               << 255 << endl;
+                    if(legID == 0) {
+                        //投票で接地判定
+                        if (cm.voteOfEachPointList[i].LifStepped[imID] == true) {
+                            outputfile << to_string(this->model.vertices[i].x) << " "
+                                       << to_string(this->model.vertices[i].y) << " "
+                                       << to_string(this->model.vertices[i].z) << " "
+                                       << 0 << " "
+                                       << 0 << " "
+                                       << (legID * 128) + 127 << " "
+                                       << 255 << endl;
+                        } else {
+                            outputfile << this->model.vertices[i].x << " "
+                                       << this->model.vertices[i].y << " "
+                                       << this->model.vertices[i].z << " "
+                                       << 255 << " "
+                                       << 255 << " "
+                                       << 255 << " "
+                                       << 255 << endl;
+                        }
+                    }
                 }
             }
+            outputfile.close();
         }
     }
-    outputfile.close();
     cout << "ply correctly exported" << endl;
     return 1;
 }
@@ -1105,9 +1129,9 @@ void FootPrint::estimateCameraPose() {
         cv::findChessboardCorners(image, cv::Size(W, H), detectedCorners);
         detectedCornerList.push_back(detectedCorners);
 
-//        cv::drawChessboardCorners(image, cv::Size(W,H), detectedCorners, true);
-//        cv::imshow("chess board", image);
-//        cv::waitKey(0);
+        cv::drawChessboardCorners(image, cv::Size(W,H), detectedCorners, true);
+        cv::imshow("chess board", image);
+        cv::waitKey(0);
     }
 
     //カメラ位置姿勢推定
@@ -1126,13 +1150,43 @@ void FootPrint::estimateCameraPose() {
         this->CameraInfoList[camID].camera._T = T;
         this->CameraInfoList[camID].camera.outputRt(this->_camera_path + cameraName + "/cameraRt.txt");
 
+
+        //床点群を再投影
+        cout << this->model.vertices.size() << endl;
+        cout << this->CameraInfoList[camID].camera._A.type() << endl;
+        cout << R.type() << endl;
+        cout << T.type() << endl;
+        cout << this->CameraInfoList[camID].camera._dist.type() << endl;
+
+        cv::projectPoints(this->model.vertices,
+                          R,
+                          T,
+                          this->CameraInfoList[camID].camera._A,
+                          this->CameraInfoList[camID].camera._dist,
+                          this->CameraInfoList[camID].projPoints);
+
+//    for (int ptID = 0; ptID < cam.projPoints.size(); ptID++){
+//        cam.projPoints[ptID].x *= (this->IMAGE_WIDTH / this->ORIGINAL_IMAGE_WIDTH);
+//        cam.projPoints[ptID].y *= (this->IMAGE_HEIGHT / this->ORIGINAL_IMAGE_HEIGHT);
+//    }
+
+        cv::Mat dummy = cv::imread("/home/yagi/CLionProjects/prismFootPrint/Data/Camera/gopro" + to_string(this->CameraInfoList[camID].camera.camID + this->CAMERA_FIRST_ID) + "/image0000.jpg");
+        for(cv::Point2f pt : this->CameraInfoList[camID].projPoints){
+            cv::circle(dummy, pt, 2, cv::Scalar(0,255,0), 2);
+        }
+        cv::imshow("projected points", dummy);
+        cv::waitKey();
+
+
     }
+
+
 }
 
 void FootPrint::generatePlaneModel(){
     Model reconstructedModel;
     vector<cv::Point3f> planePoints;
-    yagi::generatePointClouds(planePoints, 100, 100, 1000);
+    yagi::generatePointClouds(planePoints, 90, 60, 10);
     reconstructedModel.vertices = planePoints;
     reconstructedModel.savePly(this->_projects_path + "/planePoints.ply");
 }
@@ -1298,23 +1352,111 @@ void FootPrint::estimateGroundPlane(cv::Mat points){
 
 }
 
-void FootPrint::estimateStepPositions(){
-    this->model.readModel(this->_projects_path + "planePoints.ply");
-    for(int camID = 0; camID < this->CAMERA_FIRST_ID + this->CAMERA_NUM; camID++) {
+void FootPrint::projectPoints(CameraInfo &cam){
+    //床点群を再投影
+//    cout << this->model.vertices.size() << endl;
+//    cout << cam.camera._A.type() << endl;
+//    cout << cv::Mat(cam.camera._Rvec).type() << endl;
+//    cout << cv::Mat(cam.camera._Tvec).type() << endl;
+//    cout << cam.camera._dist.type() << endl;
+//    cout << cv::Mat(cam.camera._Rvec) << endl;
+//    cout << cv::Mat(cam.camera._Tvec) << endl;
+//    cout << cam.camera._dist << endl;
 
+//    cv::Point3f point(0,0,0);
+//    cv::Point3f camera_coord_point(0,0,0);
+//    point.x -= cam.camera._Tvec[0];
+//    point.y -= cam.camera._Tvec[1];
+//    point.z -= cam.camera._Tvec[2];
+//
+//    cv::Mat tmpR;
+//    cv::Mat(cam.camera._Rvec).convertTo(tmpR, CV_32F);
+//
+//    cv::Mat R;
+//    cv::Rodrigues(tmpR, R);
+//    cv::Mat R_inv = R.inv();
+//    cout << R_inv << endl;
+//
+////    camera_coord_point.x = R_inv.at<float>(0, 0)*point.x + R_inv.at<float>(0, 1)*point.y + R_inv.at<float>(0, 2)*point.z;
+////    camera_coord_point.y = R_inv.at<float>(1, 0)*point.x + R_inv.at<float>(1, 1)*point.y + R_inv.at<float>(1, 2)*point.z;
+////    camera_coord_point.z = R_inv.at<float>(2, 0)*point.x + R_inv.at<float>(2, 1)*point.y + R_inv.at<float>(2, 2)*point.z;
+//
+//    camera_coord_point.x = R_inv.at<float>(0, 0)*point.x + R_inv.at<float>(1, 0)*point.y + R_inv.at<float>(2, 0)*point.z;
+//    camera_coord_point.y = R_inv.at<float>(0, 1)*point.x + R_inv.at<float>(1, 1)*point.y + R_inv.at<float>(2, 1)*point.z;
+//    camera_coord_point.z = R_inv.at<float>(0, 2)*point.x + R_inv.at<float>(1, 2)*point.y + R_inv.at<float>(2, 2)*point.z;
+//
+//
+//
+////    camera_coord_point.x = R[0]*point.x + R[1]*point.y + R[2]*point.z;
+////    camera_coord_point.y = R[3]*point.x + R[4]*point.y + R[5]*point.z;
+////    camera_coord_point.z = R[6]*point.x + R[7]*point.y + R[8]*point.z;
+//
+////    camera_coord_point.x - 8.91;
+////    camera_coord_point.y - 0.33;
+////    camera_coord_point.z + 4.49;
+//
+////    camera_coord_point = point;
+//
+//    //カメラ座標系から正規化画像座標系への変換
+//    cv::Point2f normalized_point;
+//    normalized_point.x = camera_coord_point.x / camera_coord_point.z;
+//    normalized_point.y = camera_coord_point.y / camera_coord_point.z;
+//
+//    //正規化画像座標系から画像座標系への変換
+//    cv::Point2f image_point;
+////    cout << this->cameraParam[0] << " " << this->cameraParam[2] << endl;
+////    cout << this->cameraParam[4] << " " << this->cameraParam[5] << endl;
+////    image_point.x = (normalized_point.x * 800) + 960;
+////    image_point.y = (normalized_point.y * 800) + 540;
+//    cv::Mat tmpA;
+//    cam.camera._A.convertTo(tmpA, CV_32F);
+//    image_point.x = (normalized_point.x * tmpA.at<float>(0,0)) + tmpA.at<float>(0,2);
+//    image_point.y = (normalized_point.y * tmpA.at<float>(1,1)) + tmpA.at<float>(1,2);
+//
+//    cout << "imp" << image_point << endl;
+//
+//    cv::Mat tmpT;
+//    cv::Mat(cam.camera._Tvec).convertTo(tmpT, CV_32F);
+//
+//    cv::Mat tmpDist;
+//    cam.camera._dist.convertTo(tmpDist, CV_32F);
+//
+//    cout << "projected 0,0 " << this->model.vertices[0] << endl;
+////    cv::projectPoints(srcPoints, -tmpR, trans, tmpA, tmpDist, cam.projPoints);
+
+    cv::projectPoints(this->model.vertices, cv::Mat(cam.camera._Rvec), cv::Mat(cam.camera._Tvec), cam.camera._A,
+                      cam.camera._dist, cam.projPoints);
+
+//    for (int ptID = 0; ptID < cam.projPoints.size(); ptID++){
+//        cam.projPoints[ptID].x *= (this->IMAGE_WIDTH / this->ORIGINAL_IMAGE_WIDTH);
+//        cam.projPoints[ptID].y *= (this->IMAGE_HEIGHT / this->ORIGINAL_IMAGE_HEIGHT);
+//    }
+
+    cv::Mat dummy = cv::imread("/home/yagi/CLionProjects/prismFootPrint/Data/Camera/gopro" + to_string(cam.camera.camID + this->CAMERA_FIRST_ID) + "/image0000.jpg");
+    for(cv::Point2f pt : cam.projPoints){
+        cv::circle(dummy, pt, 2, cv::Scalar(0,255,0), 2);
+    }
+    cv::imshow("projected points", dummy);
+    cv::waitKey();
+};
+
+void FootPrint::estimateStepPositions(){
+    for(int camID = 0; camID < this->CAMERA_NUM; camID++) {
 
         string cameraName = "cam" + to_string(camID + this->CAMERA_FIRST_ID);
-        CameraInfo* cm = &this->CameraInfoList[camID];
+        CameraInfo *cm = &this->CameraInfoList[camID];
 
+//        this->right_vote.resize(this->model.vertices_num);
+//        this->left_vote.resize(this->model.vertices_num);
 
-        this->right_vote.resize(this->model.vertices_num);
-        this->left_vote.resize(this->model.vertices_num);
-        this->loadImages(this->_projects_path +"openPoseData/" + cameraName + "/imagelist.txt", cm->imageList, 50);
-        this->loadOpenPoseData(this->_projects_path + "openPoseData/" + cameraName + "/human_pose_info.txt", cm->imageList, 50);
+        this->loadImages(this->_projects_path + "openPoseData/" + cameraName + "/imagelist.txt", cm->imageList, 50);
+        this->loadOpenPoseData(this->_projects_path + "openPoseData/" + cameraName + "/human_pose_info.txt",
+                               cm->imageList, 50);
         this->votedFrameInit();
         this->trackTargetPerson(cm->imageList);
-
-        this->findFootPrintFromCameraInfo(*cm);
-        this->paintFootPrint();
+        this->projectPoints(*cm);
     }
+    this->voting();
+    this->countVotes();
+    this->paintFootPrint();
 }

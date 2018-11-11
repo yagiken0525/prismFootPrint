@@ -30,32 +30,43 @@ public:
     };
     ~FootPrint(){};
 
+    class VoteList{
+    public:
+        std::vector<bool> LlegVote;
+        std::vector<bool> RlegVote;
+        std::vector<bool> LifStepped;
+        std::vector<bool> RifStepped;
+    };
+
     class CameraInfo {
     public:
         std::vector<ImageInfo> imageList;
         Camera camera;
         std::vector<cv::Point2f> projPoints;
+        std::vector<VoteList> voteOfEachPointList;
     };
 
     class ModelInfo : public Model {
     public:
-        std::vector<std::vector<std::vector<bool>>> votelist;
-        std::vector<std::vector<bool>> ifSteped;
+        std::vector<std::vector<VoteList>> voteOfPoints;
     };
 
     std::vector<FootPrint::CameraInfo> CameraInfoList;
 
     //しきい値
-    float DIST_RANGE = 30; // 画像投影点の内どれくらいの距離の点を接地点とみなすか
+    float DIST_RANGE = 300; // 画像投影点の内どれくらいの距離の点を接地点とみなすか
     int VOTE_RANGE = 5; // 何投票されたら接地点とみなすか
     int FRAME_RANGE = 5; // 何投票されたら接地点とみなすか
     int CAMERA_NUM = 3; // 接地カメラの個数
     int CAMERA_FIRST_ID = 3; // 接地カメラの個数
+    int IMAGE_NUM; // 接地カメラの個数
     std::string VIDEO_TYPE = "MP4"; // 接地カメラの個数
     bool FACE_PLY = false; // 出力をメッシュファイルにするかどうか
     int LOAD_LIMIT = 5; // 出力をメッシュファイルにするかどうか
-    int IMAGE_WIDTH = 1920; // 出力をメッシュファイルにするかどうか
-    int IMAGE_HEIGHT = 1080; // 出力をメッシュファイルにするかどうか
+    float ORIGINAL_IMAGE_WIDTH = 1920; // 出力をメッシュファイルにするかどうか
+    float ORIGINAL_IMAGE_HEIGHT = 1080; // 出力をメッシュファイルにするかどうか
+    float IMAGE_WIDTH = 1920; // 出力をメッシュファイルにするかどうか
+    float IMAGE_HEIGHT = 1080; // 出力をメッシュファイルにするかどうか
 
     std::string _project_name;
     std::string _data_path;
@@ -65,6 +76,8 @@ public:
     std::string _camera_path;
     std::string _sfm_projects_path;
 
+    void voting();
+    void countVotes();
     void loadAllImages();
     void cameraInfoInit();
     void videoToImage();
@@ -74,8 +87,9 @@ public:
     void loadExtrinsicCameraParam();
     void loadProjectionMatrix();
     void estimateCameraPose();
-    void findFootPrintFromCameraInfo(CameraInfo& cam);
+    void findFootPrintFromCameraInfo();
     void generatePlaneModel();
+    void projectPoints(CameraInfo& cm);
 
     int loadImages(std::string file_name, std::vector<ImageInfo>& imageInfoList, int lim = 1000);
     int loadMultipleCameraRts(std::string file_name, std::vector<ImageInfo>& imageInfoList);

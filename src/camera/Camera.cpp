@@ -34,6 +34,12 @@ int Camera::loadCameraA(std::string file_name){
         }
     }
 
+//    this->_A.at<double>(0,0) = focalPoint.x;
+//    this->_A.at<double>(1,1) = focalPoint.y;
+//    this->_A.at<double>(0,2) = centerPoint.x;
+//    this->_A.at<double>(1,2) = centerPoint.y;
+//    this->_A.at<double>(2,2) = 1.0;
+
     this->_A.at<double>(0,0) = focalPoint.x;
     this->_A.at<double>(1,1) = focalPoint.y;
     this->_A.at<double>(0,2) = centerPoint.x;
