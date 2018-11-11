@@ -30,15 +30,20 @@ public:
     };
     ~FootPrint(){};
 
-    class VoteList{
+    typedef std::vector<bool> votelist;
+    class VoteOfCamera{
     public:
-        std::vector<bool> LlegVote;
-        std::vector<bool> RlegVote;
-        std::vector<bool> LifStepped;
-        std::vector<bool> RifStepped;
+        votelist _LvoteList;
+        votelist _RvoteList;
+        votelist _Lstepped;
+        votelist _Rstepped;
     };
+    typedef std::vector<VoteOfCamera> VoteOfPoint;
 
-
+    class myImageInfo : public ImageInfo{
+    public:
+        std::vector<Vote> voteList;
+    };
 
     class CameraInfo {
     public:
@@ -46,30 +51,33 @@ public:
         std::vector<ImageInfo> imageList;
         Camera camera;
         std::vector<cv::Point2f> projPoints;
-        std::vector<VoteList> voteOfEachPointList;
     };
 
     class ModelInfo : public Model {
     public:
-        std::vector<std::vector<VoteList>> voteOfPoints;
+        std::vector<VoteOfPoint> VoteOfPointsList;
     };
 
     std::vector<FootPrint::CameraInfo> CameraInfoList;
 
     //しきい値
-    float DIST_RANGE = 300; // 画像投影点の内どれくらいの距離の点を接地点とみなすか
-    int VOTE_RANGE = 5; // 何投票されたら接地点とみなすか
-    int FRAME_RANGE = 5; // 何投票されたら接地点とみなすか
-    int CAMERA_NUM = 3; // 接地カメラの個数
-    int CAMERA_FIRST_ID = 3; // 接地カメラの個数
+    float DIST_RANGE; // 画像投影点の内どれくらいの距離の点を接地点とみなすか
+    int VOTE_RANGE; // 何投票されたら接地点とみなすか
+    int FRAME_RANGE; // 何投票されたら接地点とみなすか
+    int CAMERA_NUM; // 接地カメラの個数
+    int CAMERA_FIRST_ID; // 接地カメラの個数
     int IMAGE_NUM; // 接地カメラの個数
+    int SEARCHING_RECT; // 接地カメラの個数
     std::string VIDEO_TYPE = "MP4"; // 接地カメラの個数
     bool FACE_PLY = false; // 出力をメッシュファイルにするかどうか
-    int LOAD_LIMIT = 5; // 出力をメッシュファイルにするかどうか
+    int FINISH_FRAME = 5; // 出力をメッシュファイルにするかどうか
     float ORIGINAL_IMAGE_WIDTH = 1920; // 出力をメッシュファイルにするかどうか
     float ORIGINAL_IMAGE_HEIGHT = 1080; // 出力をメッシュファイルにするかどうか
     float IMAGE_WIDTH = 1920; // 出力をメッシュファイルにするかどうか
     float IMAGE_HEIGHT = 1080; // 出力をメッシュファイルにするかどうか
+    bool SELECT_TRACKER_BY_CLICKING = false;
+    bool SHOW_TRACKING_RESULT = false;
+    bool SHOW_REPROJECT_RESULT;
 
     std::string _project_name;
     std::string _data_path;

@@ -8,7 +8,9 @@ using namespace std;
 
 void OpenPosePerson::setBodyCoord(vector<string> coord) {
     cv::Point2f coord_f(stof(coord[0]), stof(coord[1]));
+    float prob(stof(coord[2]));
     _body_parts_coord.push_back(coord_f);
+    _probabilityList.push_back(prob);
 }
 
 
@@ -19,4 +21,5 @@ vector<cv::Point2f> OpenPosePerson::getBodyCoord() {
 
 void OpenPosePerson::clearBodyCoord() {
     _body_parts_coord.clear();
+    _probabilityList.clear();
 }

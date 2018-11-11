@@ -18,8 +18,9 @@ public:
     std::vector<cv::Point2f> getBodyCoord();
     void clearBodyCoord();
     int humanID = 0;
-private:
+
     std::vector<cv::Point2f> _body_parts_coord;
+    std::vector<float> _probabilityList;
 };
 
 

@@ -6,21 +6,22 @@ using namespace std;
 int main() {
     FootPrint footPrint("test");
     footPrint.DIST_RANGE = 300; // 画像投影点の内どれくらいの距離の点を接地点とみなすか
-    footPrint.VOTE_RANGE = 8; // 何投票されたら接地点とみなすか
-    footPrint.FRAME_RANGE = 15; // 連続何フレームで検索するか
-    footPrint.CAMERA_NUM = 3; // 接地カメラ個数
-    footPrint.CAMERA_FIRST_ID = 10; // 接地カメラID
-    footPrint.LOAD_LIMIT = 5; // 接地カメラID
+    footPrint.FRAME_RANGE = 20; // 近傍何フレームで投票数を合計するか
+    footPrint.VOTE_RANGE = 5; // 何投票されたら接地点とみなすか
+    footPrint.CAMERA_NUM = 1; // 接地カメラ個数
+    footPrint.CAMERA_FIRST_ID = 11; // 接地カメラの最小ID
+    footPrint.FINISH_FRAME = 300; //何フレームまで実行するか
+    footPrint.SEARCHING_RECT = 50; //次のフレームで周囲何ピクセルまで探索するか
     footPrint.VIDEO_TYPE = ".MP4"; // 動画拡張子
-    footPrint.ORIGINAL_IMAGE_WIDTH = 1920; // 出力をメッシュファイルにするかどうか
-    footPrint.ORIGINAL_IMAGE_HEIGHT = 1080; // 出力をメッシュファイルにするかどうか
-    footPrint.IMAGE_WIDTH = 640; // 出力をメッシュファイルにするかどうか
-    footPrint.IMAGE_HEIGHT = 320; // 出力をメッシュファイルにするかどうか
+    footPrint.ORIGINAL_IMAGE_WIDTH = 1920; // 入力動画の幅
+    footPrint.ORIGINAL_IMAGE_HEIGHT = 1080; //　入力動画の高さ
+    footPrint.SELECT_TRACKER_BY_CLICKING = false; // tracking対象を手動で指定するか
+    footPrint.SHOW_TRACKING_RESULT = false; // tracking結果を表示するか
+    footPrint.SHOW_REPROJECT_RESULT = true; // 点群の再投影結果を表示するか
 
-    //カメラパラメータの初期化
+    //カメラパラメータの初期化と読み込み
     footPrint.cameraInfoInit();
     footPrint.loadAllCameraParam();
-
 
     //動画から画像への変換
 //    footPrint.videoToImage();
@@ -29,18 +30,24 @@ int main() {
 //    footPrint.detectHumanPose();
 
     //カメラ位置姿勢推定
-    footPrint.model.readModel(footPrint._projects_path + "planePoints.ply");
 //    footPrint.estimateCameraPose();
 
-    //床平面のplyファイル作成
-//    footPrint.generatePlaneModel();
+    //床平面のplyファイル生成
+    footPrint.generatePlaneModel();
+
+    //plyファイルの読み込み
+    footPrint.model.readModel(footPrint._projects_path + "planePoints.ply");
 
     //足あとの検出
     footPrint.estimateStepPositions();
 
+    return 0;
+}
 
 
-    //３次元復元
+
+
+//３次元復元
 //    footPrint.loadAllImages();
 //    footPrint.reconstruct3Dpose();
 //    }else if(command == "ESTIMATE_STEP_POINTS"){
@@ -75,5 +82,3 @@ int main() {
 //        footPrint.calculateSteppedFrame(1);
 //        footPrint.savePlytoTxt(1);
 //    }
-    return 0;
-}
