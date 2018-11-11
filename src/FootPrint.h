@@ -38,8 +38,11 @@ public:
         std::vector<bool> RifStepped;
     };
 
+
+
     class CameraInfo {
     public:
+        int camID;
         std::vector<ImageInfo> imageList;
         Camera camera;
         std::vector<cv::Point2f> projPoints;

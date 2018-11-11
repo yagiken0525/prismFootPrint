@@ -36,7 +36,6 @@ public:
     cv::Mat getP(){ return _P; }
     cv::Mat getDist(){ return _dist; }
 
-    int camID;
     cv::Point2d focalPoint;
     cv::Point2d centerPoint;
     cv::Point2d radialDistortion;

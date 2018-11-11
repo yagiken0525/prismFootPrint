@@ -29,7 +29,7 @@ void FootPrint::cameraInfoInit(){
     for (int i = 0; i < this->CAMERA_NUM; i++){
         CameraInfo camIn;
         Camera cam;
-        cam.camID = i;
+        camIn.camID = i;
         camIn.camera = cam;
         this->CameraInfoList.push_back(camIn);
     }
@@ -462,7 +462,7 @@ void FootPrint::voting() {
             VoteList voteList;
             voteList.LlegVote = LlegVote;
             voteList.RlegVote = RlegVote;
-            this->CameraInfoList[cm.camera.camID].voteOfEachPointList.push_back(voteList);
+            this->CameraInfoList[cm.camID].voteOfEachPointList.push_back(voteList);
         }
     }
 }
@@ -489,7 +489,7 @@ void FootPrint::countVotes(){
                                 ifStepped.push_back(false);
                         }
                     }
-                    this->CameraInfoList[cm.camera.camID].voteOfEachPointList[ptID].LifStepped = ifStepped;
+                    this->CameraInfoList[cm.camID].voteOfEachPointList[ptID].LifStepped = ifStepped;
                 }else {
                     voteList = cm.voteOfEachPointList[ptID].RlegVote;
                     for (int frameID = 0; frameID < IMAGE_NUM; frameID++) {
@@ -505,7 +505,7 @@ void FootPrint::countVotes(){
                                 ifStepped.push_back(false);
                         }
                     }
-                    this->CameraInfoList[cm.camera.camID].voteOfEachPointList[ptID].RifStepped = ifStepped;
+                    this->CameraInfoList[cm.camID].voteOfEachPointList[ptID].RifStepped = ifStepped;
                 }
             }
         }
@@ -769,7 +769,7 @@ int FootPrint::savePointClouds(){
 
 int FootPrint::paintFootPrint() {
     for (CameraInfo cm : this->CameraInfoList) {
-        string camName = "cam" + to_string(cm.camera.camID + 1);
+        string camName = "cam" + to_string(cm.camID + 1);
         for(int legID = 0; legID < 2; legID++) {
 
             //plyfile出力
@@ -1170,7 +1170,7 @@ void FootPrint::estimateCameraPose() {
 //        cam.projPoints[ptID].y *= (this->IMAGE_HEIGHT / this->ORIGINAL_IMAGE_HEIGHT);
 //    }
 
-        cv::Mat dummy = cv::imread("/home/yagi/CLionProjects/prismFootPrint/Data/Camera/gopro" + to_string(this->CameraInfoList[camID].camera.camID + this->CAMERA_FIRST_ID) + "/image0000.jpg");
+        cv::Mat dummy = cv::imread("/home/yagi/CLionProjects/prismFootPrint/Data/Camera/gopro" + to_string(this->CameraInfoList[camID].camID + this->CAMERA_FIRST_ID) + "/image0000.jpg");
         for(cv::Point2f pt : this->CameraInfoList[camID].projPoints){
             cv::circle(dummy, pt, 2, cv::Scalar(0,255,0), 2);
         }
@@ -1432,7 +1432,7 @@ void FootPrint::projectPoints(CameraInfo &cam){
 //        cam.projPoints[ptID].y *= (this->IMAGE_HEIGHT / this->ORIGINAL_IMAGE_HEIGHT);
 //    }
 
-    cv::Mat dummy = cv::imread("/home/yagi/CLionProjects/prismFootPrint/Data/Camera/gopro" + to_string(cam.camera.camID + this->CAMERA_FIRST_ID) + "/image0000.jpg");
+    cv::Mat dummy = cv::imread("/home/yagi/CLionProjects/prismFootPrint/Data/Camera/gopro" + to_string(cam.camID + this->CAMERA_FIRST_ID) + "/image0000.jpg");
     for(cv::Point2f pt : cam.projPoints){
         cv::circle(dummy, pt, 2, cv::Scalar(0,255,0), 2);
     }
