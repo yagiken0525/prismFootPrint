@@ -100,7 +100,7 @@ void yagi::outputTextFromImage(const std::string video_path, const std::string o
 
     for(int i=0; i<images.size();i++){
 
-        cv::resize(images[i],images[i],Size(), 640.0/images[i].cols, 320.0/images[i].rows);
+//        cv::resize(images[i],images[i],Size(), 640.0/images[i].cols, 320.0/images[i].rows);
 
         //cv::Mat dummy = cv::Mat::zeros(images[i].cols, images[i].rows * (images[i].), CV_32FC3);
 

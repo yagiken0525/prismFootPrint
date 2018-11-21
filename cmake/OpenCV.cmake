@@ -1,5 +1,5 @@
 #${project name}config.cmake を探す場所を指定
-#set(OpenCV_DIR /home/yagi/UserLibrary/opencv-2.4.13/Build)
+set(OpenCV_DIR /home/yagi/UserLibrary/opencv-3.4.3/Build)
 
 #findcmake,configcmakeを探す
 find_package(OpenCV REQUIRED)

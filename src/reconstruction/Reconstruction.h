@@ -5,7 +5,6 @@
 #ifndef PRISM_FOOTPRINT_RECONSTRUCTION_H
 #define PRISM_FOOTPRINT_RECONSTRUCTION_H
 
-
 class Reconstruction {
 
 };

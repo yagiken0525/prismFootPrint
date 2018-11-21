@@ -283,14 +283,22 @@ void Model::savePly(string saveFilePath){
     outputfile << "property list uchar int vertex_indices" << endl;
     outputfile << "end_header" << endl;
 
+
+    int blockCol = 5;
+    int blockRow = 5;
+    int pointNum = this->vertices.size();
+    int blockPointNum = pointNum/(blockCol*blockRow);
+
     for (int i = 0; i < this->vertices.size(); i++){
 
+        int color = 10 * (i / blockPointNum);
+        cout << color << endl;
         outputfile  << this->vertices[i].x << " "
                     << this->vertices[i].y << " "
                     << this->vertices[i].z << " "
                     << 255 << " "
-                    << 255 << " "
-                    << 255 << " "
+                    << color << " "
+                    << color << " "
                     << 255 << endl;
 
 

@@ -55,6 +55,7 @@ public:
 
     class ModelInfo : public Model {
     public:
+        cv::Point3f *modelBlocks;
         std::vector<VoteOfPoint> VoteOfPointsList;
     };
 
@@ -78,6 +79,10 @@ public:
     bool SELECT_TRACKER_BY_CLICKING = false;
     bool SHOW_TRACKING_RESULT = false;
     bool SHOW_REPROJECT_RESULT;
+    bool CHECKER_BOARD_CALIBRATION;
+    int FLOOR_WIDTH;
+    int PLY_BLOCK_WIDTH = 10;
+
 
     std::string _project_name;
     std::string _data_path;
@@ -97,11 +102,14 @@ public:
     void loadIntrinsicCameraParam();
     void loadExtrinsicCameraParam();
     void loadProjectionMatrix();
-    void estimateCameraPose();
+    void estimateCameraPoseWithCheckerBoard();
+    void estimateCameraPoseWithClickingPoints();
     void findFootPrintFromCameraInfo();
     void generatePlaneModel();
+    void estimateCameraPose();
     void projectPoints(CameraInfo& cm);
-
+    void separateBlocks();
+    void setImageResizehomography();
     int loadImages(std::string file_name, std::vector<ImageInfo>& imageInfoList, int lim = 1000);
     int loadMultipleCameraRts(std::string file_name, std::vector<ImageInfo>& imageInfoList);
     int loadOpenPoseData(std::string file_name, std::vector<ImageInfo>& imageInfoList, int lim = 1000);
@@ -120,20 +128,23 @@ public:
     void reconstruct3Dpose();
     void estimateGroundPlane(cv::Mat points);
     void estimateStepPositions();
+    void outputTargetPersonInfo(CameraInfo &cam);
 
-
+    std::vector<std::vector<cv::Point2f>> detectedCornerList;
     cv::Point3f imagePointTo3dPoint(cv::Point2f point);
     cv::Point2f worldPointToImagePoint(cv::Point3f point, Camera* camera);
     std::vector<int> findFootPrintAreaIn3D(cv::Point2f point, Camera camera);
     std::set<int> findFootPrintAreaIn3DSet(cv::Point2f point, Camera* camera, cv::Mat image);
-
+    cv::Mat imageResizeH;
     ModelInfo model;
+
     int imageWidth = 1920;
     int imageHeight = 1080;
 
     std::vector<int> right_vote;
     std::vector<int> left_vote;
     std::vector<std::pair<cv::Point2f, int>> clickLegPoints;
+    std::vector<cv::Point3f> objectCorners;
 
     cv::Scalar color;
     std::vector<std::pair<int, float>> RstepFrame;

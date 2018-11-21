@@ -71,15 +71,83 @@ void yagi::loadImage(string imagePath, vector<cv::Mat>* imageList){
     }
 }
 
-void yagi::generatePointClouds(std::vector<cv::Point3f>& objectCorners, int H, int W, float SCALE){
-    for (int i = 0; i < H; i++) {
-        for (int j = 0; j < W; j++) {
-            objectCorners.push_back(cv::Point3f(j * SCALE, i * SCALE, 0.0f));
+void yagi::generatePointClouds(std::vector<cv::Point3f>& objectCorners, int H, int W, float SCALE, int Wstart, int Hstart){
+    int Hrange = H - Hstart;
+    int Wrange = W - Wstart;
+
+    for (int i = 0; i < Hrange; i++) {
+        for (int j = 0; j < Wrange; j++) {
+            objectCorners.push_back(cv::Point3f((j + Wstart) * SCALE, (i + Hstart) * SCALE, 0.0f));
         }
     }
 };
 
+void yagi::generatePointCloudsAsBlocks(std::vector<cv::Point3f>& objectCorners, int H, int W, float SCALE, int Wstart, int Hstart, int blockCols, int blockRows) {
+    int Hrange = H - Hstart;
+    int Wrange = W - Wstart;
 
+    int blockWidth = Wrange / blockCols;
+    int blockHeight = Hrange / blockRows;
+
+    vector<cv::Point3f> blocks[blockCols][blockRows];
+    for (int blockCol = 0; blockCol < blockCols; blockCol++) {
+        for (int blockRow = 0; blockRow < blockRows; blockRow++) {
+            vector<cv::Point3f> block;
+            for (int i = 0; i < blockWidth; i++) {
+                for (int j = 0; j < blockWidth; j++) {
+                    float x = SCALE * (i - W + blockWidth * blockRow);
+                    float y = SCALE * (j - H + blockHeight * blockCol);
+                    block.push_back(cv::Point3f(x, y, 0.0f));
+                    objectCorners.push_back(cv::Point3f(x, y, 0.0f));
+                }
+            }
+            blocks[blockCol][blockRow] = block;
+        }
+    }
+}
+
+void yagi::print_info(const cv::Mat& mat)
+{
+    using namespace std;
+
+    // 要素の型とチャンネル数の組み合わせ。
+    // 紙面の都合により、サンプルで使用する値のみ記述
+    cout << "type: " << (
+            mat.type() == CV_8UC3 ? "CV_8UC3" :
+            mat.type() == CV_16SC1 ? "CV_16SC1" :
+            mat.type() == CV_64FC2 ? "CV_64FC2" :
+            to_string(mat.type())
+    ) << endl;
+
+    // 要素の型
+    cout << "depth: " << (
+            mat.depth() == CV_8U ? "CV_8U" :
+            mat.depth() == CV_16S ? "CV_16S" :
+            mat.depth() == CV_32F ? "CV_32F" :
+            mat.depth() == CV_64F ? "CV_64F" :
+            to_string(mat.depth())
+    ) << endl;
+
+    // チャンネル数
+    cout << "channels: " << mat.channels() << endl;
+
+    // バイト列が連続しているか
+    cout << "continuous: " <<
+         (mat.isContinuous() ? "true" : "false")<< endl;
+    cout << "rows: " << mat.rows << endl;
+    cout << "cols: " << mat.cols << endl;
+    cout << "size: " << mat.size() << endl;
+    cout << "dims: " << mat.dims << endl;
+    cout << endl;
+}
+
+void yagi::some_filter(const cv::Mat& in, cv::Mat& out)
+{
+    // フィルタが unsigned char 3チャンネルのみ受け付ける場合のチェック
+    // 大抵の場合、チェックが失敗する時は呼び出し側の実装がミスってるので
+    // assert()で落ちてしまって良いと思う
+    assert(in.type() == CV_8UC3 && "input image must be CV_8UC3");
+}
 
 cv::Mat yagi::maskAofB(cv::Mat A, cv::Mat B) {
     cv::Mat dst;

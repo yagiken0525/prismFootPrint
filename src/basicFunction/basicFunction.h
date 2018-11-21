@@ -47,11 +47,13 @@ namespace yagi {
 
     void loadImage(std::string imagePath, std::vector<cv::Mat>* imageList);
 
-    void generatePointClouds(std::vector<cv::Point3f>& objectCorners, int H, int W, float SCALE);
+    void generatePointClouds(std::vector<cv::Point3f>& objectCorners, int H, int W, float SCALE, int Wstart = 0, int Hstart = 0);
 
+    void generatePointCloudsAsBlocks(std::vector<cv::Point3f>& objectCorners, int H, int W, float SCALE, int Wstart = 0, int Hstart = 0, int BlockCol = 1, int BlockRow = 1);
 
+    void some_filter(const cv::Mat& in, cv::Mat& out);
 
-
+    void print_info(const cv::Mat& mat);
 }
 
 #endif //MAINTEST_BASICFUNCTION_H
