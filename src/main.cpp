@@ -9,8 +9,8 @@ int main() {
     footPrint.DIST_RANGE = 300; // 画像投影点の内どれくらいの距離の点を接地点とみなすか
     footPrint.FRAME_RANGE = 20; // 近傍何フレームで投票数を合計するか
     footPrint.VOTE_RANGE = 5; // 何投票されたら接地点とみなすか
-    footPrint.CAMERA_NUM = 3; // 接地カメラ個数
-    footPrint.CAMERA_FIRST_ID = 10; // 接地カメラの最小ID
+    footPrint.CAMERA_NUM = 1; // 接地カメラ個数
+    footPrint.CAMERA_FIRST_ID = 12; // 接地カメラの最小ID
     footPrint.FINISH_FRAME = 30; //何フレームまで実行するか
     footPrint.SEARCHING_RECT = 50; //次のフレームで周囲何ピクセルまで探索するか
     footPrint.VIDEO_TYPE = ".MP4"; // 動画拡張子
@@ -20,10 +20,43 @@ int main() {
     footPrint.IMAGE_HEIGHT = 1080; //　入力動画の高さ
     footPrint.SELECT_TRACKER_BY_CLICKING = false; // tracking対象を手動で指定するか
     footPrint.SHOW_TRACKING_RESULT = false; // tracking結果を表示するか
-    footPrint.SHOW_REPROJECT_RESULT = false; // 点群の再投影結果を表示するか
+    footPrint.SHOW_REPROJECT_RESULT = true; // 点群の再投影結果を表示するか
     footPrint.CHECKER_BOARD_CALIBRATION = true; // 点群の再投影結果を表示するか
     footPrint.PLY_BLOCK_WIDTH = 10; // 点群の領域分割幅
 
+//    cv::VideoCapture cap(0);//デバイスのオープン
+//    //cap.open(0);//こっちでも良い．
+//
+//    if(!cap.isOpened())//カメラデバイスが正常にオープンしたか確認．
+//    {
+//        //読み込みに失敗したときの処理
+//        return -1;
+//    }
+//
+//    while(1)//無限ループ
+//    {
+//        cv::Mat frame;
+//        cap >> frame; // get a new frame from camera
+//
+//        //
+//        //取得したフレーム画像に対して，クレースケール変換や2値化などの処理を書き込む．
+//        //
+//
+//        cv::imshow("window", frame);//画像を表示．
+//
+//        int key = cv::waitKey(1);
+//        if(key == 113)//qボタンが押されたとき
+//        {
+//            break;//whileループから抜ける．
+//        }
+//        else if(key == 115)//sが押されたとき
+//        {
+//            //フレーム画像を保存する．
+//            cv::imwrite("img.png", frame);
+//        }
+//    }
+//    cv::destroyAllWindows();
+//    return 0;
 
 //    // カメラパラメータ（3x3の３次元座標を２次元画像平面へ投影するための行列）
 //    double k_elms[] = { 9.803769e+02, 0.000000e+00, 6.900000e+02, 0.000000e+00, 9.757217e+02, 2.441228e+02, 0.000000e+00, 0.000000e+00, 1.000000e+00 };
@@ -52,13 +85,15 @@ int main() {
 //    footPrint.detectHumanPose();
 
     //カメラ位置姿勢推定
-    footPrint.estimateCameraPose();
+//    footPrint.estimateCameraPose();
 
     //床平面のplyファイル生成
     footPrint.generatePlaneModel();
 
     //plyファイルの読み込み
     footPrint.model.readModel(footPrint._projects_path + "planePoints.ply");
+
+    //plyファイルをブロックに分割
 
     //足あとの検出
     footPrint.estimateStepPositions();

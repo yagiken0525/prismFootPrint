@@ -447,12 +447,12 @@ void FootPrint::voting() {
                         cv::Point2f pt = cm.projPoints[ptID];
 
                         //右足
-                        cv::Point2f RlegPt = person.getBodyCoord()[13];
+                        cv::Point2f RlegPt = person.getBodyCoord()[21];
                         RlegPt.x /= (IMAGE_WIDTH / ORIGINAL_IMAGE_WIDTH);
                         RlegPt.y /= (IMAGE_HEIGHT / ORIGINAL_IMAGE_HEIGHT);
 
                         //左足
-                        cv::Point2f LlegPt = person.getBodyCoord()[10];
+                        cv::Point2f LlegPt = person.getBodyCoord()[24];
                         LlegPt.x *= (IMAGE_WIDTH / ORIGINAL_IMAGE_WIDTH);
                         LlegPt.y *= (IMAGE_HEIGHT / ORIGINAL_IMAGE_HEIGHT);
 
@@ -476,11 +476,9 @@ void FootPrint::voting() {
             this->model.VoteOfPointsList[ptID][cm.camID]._LvoteList = LvoteList;
             this->model.VoteOfPointsList[ptID][cm.camID]._RvoteList = RvoteList;
         }
-//        cout << this->model.vertices.size()/100 << endl;
-//        cout << (ptID + 1) << endl;
-//        cout << (this->model.vertices.size()/100) % (ptID + 1) << endl;
-        if( (ptID + 1) % (this->model.vertices.size()/1000) == 0)
-            cout << (ptID + 1) / (this->model.vertices.size()/1000) << " % " << endl;
+
+        if( (ptID + 1) % (this->model.vertices.size()/100) == 0)
+            cout << (ptID + 1) / (this->model.vertices.size()/100) << " % " << endl;
     }
 }
 
@@ -516,6 +514,8 @@ void FootPrint::countVotes(){
             this->model.VoteOfPointsList[ptID][cm.camID]._Lstepped = LifStepped;
             this->model.VoteOfPointsList[ptID][cm.camID]._Rstepped = RifStepped;
         }
+        if( (ptID + 1) % (this->model.vertices.size()/100) == 0)
+            cout << (ptID + 1) / (this->model.vertices.size()/100) << " % " << endl;
     }
 }
 
@@ -806,8 +806,10 @@ int FootPrint::paintFootPrint() {
             outputfile << "end_header" << endl;
 
             for (int ptID = 0; ptID < this->model.vertices.size(); ptID++) {
-                votelist ifStepped = (i == 0) ? this->model.VoteOfPointsList[ptID][CAMERA_ID]._Rstepped :
-                                                this->model.VoteOfPointsList[ptID][CAMERA_ID]._Lstepped ;
+//                votelist ifStepped = (i == 0) ? this->model.VoteOfPointsList[ptID][CAMERA_ID]._Rstepped :
+//                                                this->model.VoteOfPointsList[ptID][CAMERA_ID]._Lstepped ;
+                votelist ifStepped = (i == 0) ? this->model.VoteOfPointsList[ptID][CAMERA_ID]._RvoteList :
+                                                this->model.VoteOfPointsList[ptID][CAMERA_ID]._LvoteList;
 
                 int Rvalue = 255;
                 int Gvalue = 255;
@@ -1282,7 +1284,7 @@ void FootPrint::generatePlaneModel(){
     Model reconstructedModel;
     vector<cv::Point3f> planePoints;
 //    yagi::generatePointClouds(planePoints, 100, 100, 50, -100, -100);
-    yagi::generatePointCloudsAsBlocks(planePoints, 10, 10, 50, -10, -10, PLY_BLOCK_WIDTH, PLY_BLOCK_WIDTH);
+    yagi::generatePointCloudsAsBlocks(planePoints, 100, 100, 50, -100, -100, PLY_BLOCK_WIDTH, PLY_BLOCK_WIDTH);
     reconstructedModel.vertices = planePoints;
     reconstructedModel.savePly(this->_projects_path + "/planePoints.ply");
 }
@@ -1823,8 +1825,8 @@ void FootPrint::estimateStepPositions(){
 //        outputTargetPersonInfo(*cm);
         projectPoints(*cm);
     }
-    reconstruct3Dpose();
+//    reconstruct3Dpose();
     voting();
-    countVotes();
+//    countVotes();
     paintFootPrint();
 }
