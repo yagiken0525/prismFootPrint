@@ -68,7 +68,18 @@ void yagi::loadImage(string imagePath, vector<cv::Mat>* imageList){
     while (getline(ifs, str))
     {
         imageList->push_back(cv::imread(str));
+//        cv::imshow("im", cv::imread(str));
+//        cv::waitKey(1);
     }
+}
+
+template<typename type>
+void yagi::vectorSum(std::vector<type> vec){
+    type sum = 0.0;
+    for(type elem: vec){
+        sum += elem;
+    }
+    return sum/vec.size();
 }
 
 void yagi::generatePointClouds(std::vector<cv::Point3f>& objectCorners, int H, int W, float SCALE, int Wstart, int Hstart){

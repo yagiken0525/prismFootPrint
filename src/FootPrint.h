@@ -12,6 +12,8 @@
 #include <iostream>
 #include <vector>
 
+#define CHANNEL 10
+
 struct Vote{
     cv::Vec3f vertice;
     std::vector<int> frameNum;
@@ -51,6 +53,7 @@ public:
         std::vector<ImageInfo> imageList;
         Camera camera;
         std::vector<cv::Point2f> projPoints;
+        cv::Mat2f projPointsMat;
     };
 
     class ModelInfo : public Model {
@@ -81,7 +84,8 @@ public:
     bool SHOW_REPROJECT_RESULT;
     bool CHECKER_BOARD_CALIBRATION;
     int FLOOR_WIDTH;
-    int PLY_BLOCK_WIDTH = 10;
+    int PLY_BLOCK_WIDTH = 500;
+    int POINT_DIST = 10;
 
 
     std::string _project_name;
@@ -92,6 +96,9 @@ public:
     std::string _camera_path;
     std::string _sfm_projects_path;
 
+    void vote(Camera* cm, cv::Point2f pt, const int imID);
+    void votingToMap(const int x, const int y, const int imID);
+    void estimateStepPositions();
     void voting();
     void countVotes();
     void loadAllImages();
@@ -127,10 +134,12 @@ public:
     void calculateSteppedFrame(int i);
     void reconstruct3Dpose();
     void estimateGroundPlane(cv::Mat points);
-    void estimateStepPositions();
+//    void estimateStepPositions();
     void outputTargetPersonInfo(CameraInfo &cam);
     cv::Mat3f generatePointCloudsAsMatrix(const int width, const int dist);
 
+    cv::Mat voteMap;
+    cv::Mat stepMap;
     std::vector<std::vector<cv::Point2f>> detectedCornerList;
     cv::Point3f imagePointTo3dPoint(cv::Point2f point);
     cv::Point2f worldPointToImagePoint(cv::Point3f point, Camera* camera);

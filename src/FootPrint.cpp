@@ -429,6 +429,36 @@ int FootPrint::clickLegPoint(vector<ImageInfo>& imageInfoList){
     cv::destroyAllWindows();
 }
 
+int sumVecElem(cv::Vec<unsigned char, CHANNEL> vec){
+    int sum = 0.0;
+    for(int i = 0; i < CHANNEL; i++){
+        sum += vec[i];
+    }
+    return sum;
+}
+
+
+
+void FootPrint::votingToMap(const int x, const int y, const int imID) {
+    int elemSize = voteMap.elemSize();
+    int dstChannel = imID % VOTE_RANGE;
+//    cv::Mat newChannel = cv::Mat::zeros(PLY_BLOCK_WIDTH, PLY_BLOCK_WIDTH, CV_8U);
+
+    for (int i = 0; i < VOTE_RANGE; i++) {
+        for (int j = 0; j < VOTE_RANGE; j++) {
+            int xIdx = x + i - (VOTE_RANGE/2);
+            int yIdx = y + j - (VOTE_RANGE/2);
+            voteMap.at<cv::Vec<unsigned char, CHANNEL>>(xIdx , yIdx)[dstChannel] = 1;
+            cout << voteMap.at<cv::Vec<unsigned char, CHANNEL>>( xIdx, yIdx ) << endl;
+            //全チャンネルが1なら接地判定
+            cout << sumVecElem(voteMap.at<cv::Vec<unsigned char, CHANNEL>>(xIdx, yIdx)) << endl;
+            if(sumVecElem(voteMap.at<cv::Vec<unsigned char, CHANNEL>>(xIdx, yIdx)) >= FRAME_RANGE){
+                stepMap.at<cv::Vec3b>(xIdx, yIdx) = cv::Vec3b(255,0,0);
+            }
+        }
+    }
+}
+
 void FootPrint::voting() {
     cout << "Voting..." << endl;
     for (int ptID = 0; ptID < this->model.vertices.size(); ptID++) {
@@ -598,7 +628,7 @@ cv::Point2f FootPrint::worldPointToImagePoint(cv::Point3f point, Camera* camera)
 
 ////    for project points
 ////    世界座標系からカメラ座標系への変換
-//    cv::Point3f camera_coord_point;
+//    cv::Point3f imPt;
 //    vector<float> R = camera->_R;
 //    cv::Point3f T = camera->_T;
 //
@@ -635,9 +665,9 @@ cv::Point2f FootPrint::worldPointToImagePoint(cv::Point3f point, Camera* camera)
 ////    cv::projectPoints(points, R_mat.inv(), T_mat, A_mat, Coef, image_points);
 //
 //
-////    camera_coord_point.x = R.at<float>(0, 0)*point.x + R.at<float>(0, 1)*point.y + R.at<float>(0, 2)*point.z;
-////    camera_coord_point.y = R.at<float>(1, 0)*point.x + R.at<float>(1, 1)*point.y + R.at<float>(1, 2)*point.z;
-////    camera_coord_point.z = R.at<float>(2, 0)*point.x + R.at<float>(2, 1)*point.y + R.at<float>(2, 2)*point.z;
+////    imPt.x = R.at<float>(0, 0)*point.x + R.at<float>(0, 1)*point.y + R.at<float>(0, 2)*point.z;
+////    imPt.y = R.at<float>(1, 0)*point.x + R.at<float>(1, 1)*point.y + R.at<float>(1, 2)*point.z;
+////    imPt.z = R.at<float>(2, 0)*point.x + R.at<float>(2, 1)*point.y + R.at<float>(2, 2)*point.z;
 ////    camera_coord_point.x = R[0]*point.x + R[3]*point.y + R[6]*point.z;
 ////    camera_coord_point.y = R[1]*point.x + R[4]*point.y + R[7]*point.z;
 ////    camera_coord_point.z = R[2]*point.x + R[5]*point.y + R[8]*point.z;
@@ -1290,10 +1320,12 @@ void FootPrint::generatePlaneModel(){
 }
 
 cv::Mat3f FootPrint::generatePointCloudsAsMatrix(const int width, const int dist){
-    cv::Mat plane = cv::Mat::zeros(width, width, CV_32FC3);
-    for (int i = 0; i < width; i++) {
-        for (int j = 0; j < width; j++) {
-            plane.at<cv::Vec3f>(i, j) = cv::Vec3f(-width + i*dist, -width + j*dist, 0);
+    cv::Mat plane = cv::Mat::zeros(width * 2, width * 2, CV_32FC3);
+    for (int i = 0; i <  width * 2; i++) {
+        for (int j = 0; j < width * 2; j++) {
+            plane.at<cv::Vec3f>(i, j) = cv::Vec3f((-width + i) *dist, (-width + j)*dist, 0);
+            this->model.vertices.push_back(cv::Point3f((-width + i)*dist, (-width + j)*dist, 0));
+
         }
     }
     cv::Mat3f planePt = plane;
@@ -1431,76 +1463,162 @@ void putValueInPmat(cv::Mat*P1, const Camera* camera){
 //    P1.
 }
 
+cv::Point3f estimate3Dcoord(cv::Mat *A, cv::Mat *R, cv::Mat *T, cv::Point2f pt){
+    cout << *A << endl;
+    cout << *R << endl;
+    cout << *T << endl;
+    cv::Point3d imPt((pt.x - A->at<double>(0,2)) /A->at<double>(0,0),
+                     (pt.y - A->at<double>(1,2)) /A->at<double>(1,1),
+                     1.0);
+
+    cv::Mat Rt = cv::Mat::zeros(4,4,CV_64F);
+    Rt.at<double>(0,0) = R->at<double>(0, 0);
+    Rt.at<double>(0,1) = R->at<double>(0, 1);
+    Rt.at<double>(0,2) = R->at<double>(0, 2);
+    Rt.at<double>(0,3) = T->at<double>(0, 0);
+    Rt.at<double>(1,0) = R->at<double>(1, 0);
+    Rt.at<double>(1,1) = R->at<double>(1, 1);
+    Rt.at<double>(1,2) = R->at<double>(1, 2);
+    Rt.at<double>(1,3) = T->at<double>(0, 1);
+    Rt.at<double>(2,0) = R->at<double>(2, 0);
+    Rt.at<double>(2,1) = R->at<double>(2, 1);
+    Rt.at<double>(2,2) = R->at<double>(2, 2);
+    Rt.at<double>(2,3) = T->at<double>(0, 2);
+    Rt.at<double>(3,0) = 0;
+    Rt.at<double>(3,1) = 0;
+    Rt.at<double>(3,2) = 0;
+    Rt.at<double>(3,3) = 1;
+    cout << Rt << endl;
+
+    cv::Mat RtInv = Rt.inv();
+    cout << RtInv << endl;
+
+    double Z = (imPt.x * RtInv.at<double>(2,0) + imPt.y * RtInv.at<double>(2,1) + imPt.z * RtInv.at<double>(2,2)) ;
+    double k = -(RtInv.at<double>(2,3)/Z);
+
+    double X = (imPt.x * RtInv.at<double>(0,0) + imPt.y * RtInv.at<double>(0,1) + imPt.z * RtInv.at<double>(0,2)) ;
+    double Y = (imPt.x * RtInv.at<double>(1,0) + imPt.y * RtInv.at<double>(1,1) + imPt.z * RtInv.at<double>(1,2)) ;
+
+    X = k*X + RtInv.at<double>(0,3);
+    Y = k*Y + RtInv.at<double>(1,3);
+
+    cv::Point3f pt3D(X, Y, 0.0);
+    return pt3D;
+};
+
+void FootPrint::vote(Camera* cm, cv::Point2f pt, const int imID){
+    cv::Point3f planePt = estimate3Dcoord(&cm->_A, &cm->_Rmat, &cm->_T, pt);
+    int xIdx = int(planePt.x / 10);
+    int yIdx = int(planePt.y / 10);
+    votingToMap(xIdx, yIdx, imID);
+};
+
+
+
+void FootPrint::estimateStepPositions(){
+    for(int imID = 0; imID < this->FINISH_FRAME; imID++){
+        for (int camID = 0; camID < this->CAMERA_NUM; camID++) {
+            Camera cm = this->CameraInfoList[camID].camera;
+            string cameraName = "gopro" + to_string(camID + CAMERA_FIRST_ID);
+            cv::Mat image = this->CameraInfoList[camID].imageList[imID].image;
+            for (int personID = 0; personID < this->CameraInfoList[camID].imageList[imID].persons.size(); personID++) {
+                OpenPosePerson person = this->CameraInfoList[camID].imageList[imID].persons[personID];
+                if (person.humanID == 1) {
+                    vote(&cm, person.getBodyCoord()[21], imID);
+                    vote(&cm, person.getBodyCoord()[24], imID);
+//                    cv::Point3f Rpt = estimate3Dcoord(&cm._A, &cm._Rinv, &cm._T, person.getBodyCoord()[21]);
+//                    cv::Point3f Lpt = estimate3Dcoord(&cm._A, &cm._Rinv, &cm._T, person.getBodyCoord()[25]);
+//                    cv::Point3f Rpt = estimate3Dcoord(&cm._A, &cm._Rmat, &cm._T, detectedCornerList[0][i]);
+//                    cv::Point3f Lpt = estimate3Dcoord(&cm._A, &cm._Rmat, &cm._T, person.getBodyCoord()[25]);
+//                    int xIdx = int(Rpt.x / 10);
+//                    int yIdx = int(Rpt.y / 10);
+                }
+            }
+            cv::imshow("im", stepMap);
+            cv::waitKey();
+        }
+    }
+};
+
 void FootPrint::reconstruct3Dpose(){
 
-    // 3Dを表示するWindow生成
-    string winname = "Viz Camera Pose";
-    cv::viz::Viz3d myWindow(winname);
-
-    // 画面に座標軸を表示
-    myWindow.showWidget("Coordinate Widget", cv::viz::WCoordinateSystem());
+//    // 3Dを表示するWindow生成
+//    string winname = "Viz Camera Pose";
+//    cv::viz::Viz3d myWindow(winname);
+//
+//    // 画面に座標軸を表示
+//    myWindow.showWidget("Coordinate Widget", cv::viz::WCoordinateSystem());
 
     vector<cv::Mat> projectionMatrixList;
 
     cv::Mat P1 = cv::Mat::ones(3,4, CV_64F);
     putValueInPmat(&P1, &this->CameraInfoList[0].camera);
 
-    cv::Mat P2 = cv::Mat::ones(3,4, CV_64F);
-    putValueInPmat(&P2, &this->CameraInfoList[1].camera);
+//    cv::Mat P2 = cv::Mat::ones(3,4, CV_64F);
+//    putValueInPmat(&P2, &this->CameraInfoList[1].camera);
+//
+//    cv::Mat P3 = cv::Mat::ones(3,4, CV_64F);
+//    putValueInPmat(&P3, &this->CameraInfoList[2].camera);
+//
+//    projectionMatrixList.push_back(P1);
+//    projectionMatrixList.push_back(P2);
+//    projectionMatrixList.push_back(P3);
 
-    cv::Mat P3 = cv::Mat::ones(3,4, CV_64F);
-    putValueInPmat(&P3, &this->CameraInfoList[2].camera);
-
-    projectionMatrixList.push_back(P1);
-    projectionMatrixList.push_back(P2);
-    projectionMatrixList.push_back(P3);
-
-    vector<cv::Mat> floorImagePoints;
-    cv::Mat floorPoints;
-        for (int camID = 0; camID < this->CAMERA_NUM ; camID++) {
-            cv::Mat reshapedTemp = cv::Mat::zeros(2, 54, CV_64F);
-            cv::Mat doubleTemp;
-            cv::Mat(detectedCornerList[camID]).convertTo(doubleTemp, CV_64F);
-            for (int col = 0; col < reshapedTemp.cols; col++) {
-                for (int row = 0; row < reshapedTemp.rows; row++) {
-                    reshapedTemp.at<double>(row, col) = doubleTemp.at<double>(col, row);
-                }
-            }
-            floorImagePoints.push_back(reshapedTemp);
-       }
-    cv::sfm::triangulatePoints(floorImagePoints, projectionMatrixList, floorPoints);
-    cv::Mat floor_cloud_mat(54, 1, CV_64FC3);
-
-    for(int i = 0; i < floorPoints.cols; i++){
-        cv::Vec3d pt(floorPoints.at<double>(0,i), floorPoints.at<double>(1,i), floorPoints.at<double>(2,i));
-        cout << pt << endl;
-        floor_cloud_mat.at<cv::Vec3d>(i,0) = pt;
-    }
+//    vector<cv::Mat> floorImagePoints;
+//    cv::Mat floorPoints;
+//        for (int camID = 0; camID < this->CAMERA_NUM ; camID++) {
+//            cv::Mat reshapedTemp = cv::Mat::zeros(2, 54, CV_64F);
+//            cv::Mat doubleTemp;
+//            cv::Mat(detectedCornerList[camID]).convertTo(doubleTemp, CV_64F);
+//            for (int col = 0; col < reshapedTemp.cols; col++) {
+//                for (int row = 0; row < reshapedTemp.rows; row++) {
+//                    reshapedTemp.at<double>(row, col) = doubleTemp.at<double>(col, row);
+//                }
+//            }
+//            floorImagePoints.push_back(reshapedTemp);
+//       }
+//    cv::sfm::triangulatePoints(floorImagePoints, projectionMatrixList, floorPoints);
+//    cv::Mat floor_cloud_mat(54, 1, CV_64FC3);
+//
+//    for(int i = 0; i < floorPoints.cols; i++){
+//        cv::Vec3d pt(floorPoints.at<double>(0,i), floorPoints.at<double>(1,i), floorPoints.at<double>(2,i));
+//        cout << pt << endl;
+//        floor_cloud_mat.at<cv::Vec3d>(i,0) = pt;
+//    }
 
     for(int imID = 0; imID < this->IMAGE_NUM; imID++ ) {
         cv::Mat cloud_mat(3, 18, CV_64FC3);
-        for (int bdPartID = 0; bdPartID < 18; bdPartID++) {
-            if(bdPartID == 1) {
+        for (int bdPartID = 0; bdPartID < 25; bdPartID++) {
+            if(bdPartID == 21) {
                 cv::Mat points;
                 vector<cv::Mat> imagePoints;
                 vector<cv::Mat> usablePmatList;
                 for (int camID = 0; camID < this->CAMERA_NUM; camID++) {
                     string cameraName = "gopro" + to_string(camID + CAMERA_FIRST_ID);
                     cv::Mat image = this->CameraInfoList[camID].imageList[imID].image;
-                    for (int personID = 0;
-                         personID < this->CameraInfoList[camID].imageList[imID].persons.size(); personID++) {
+                    for (int personID = 0; personID < this->CameraInfoList[camID].imageList[imID].persons.size(); personID++) {
                         OpenPosePerson person = this->CameraInfoList[camID].imageList[imID].persons[personID];
                         if (person.humanID == 1) {
-                            if (person.getBodyCoord()[bdPartID] != cv::Point2f(0, 0)) {
-                                cv::Mat reshapedTemp = cv::Mat::zeros(2, 1, CV_64F);
-                                reshapedTemp.at<double>(0, 0) = person.getBodyCoord()[bdPartID].x;
-                                reshapedTemp.at<double>(0, 1) = person.getBodyCoord()[bdPartID].y;
-
-                                cv::circle(image, person.getBodyCoord()[bdPartID], 10, cv::Scalar(255, 0, 0), 10);
-
-                                imagePoints.push_back(reshapedTemp);
-                                usablePmatList.push_back(projectionMatrixList[camID]);
-                            }
+//                            if (person.getBodyCoord()[bdPartID] != cv::Point2f(0, 0)) {
+//                                cv::Mat reshapedTemp = cv::Mat::zeros(2, 1, CV_64F);
+//                                reshapedTemp.at<double>(0, 0) = person.getBodyCoord()[bdPartID].x;
+//                                reshapedTemp.at<double>(0, 1) = person.getBodyCoord()[bdPartID].y;
+//
+//                                cv::circle(image, person.getBodyCoord()[bdPartID], 10, cv::Scalar(255, 0, 0), 10);
+//
+//                                imagePoints.push_back(reshapedTemp);
+//                                usablePmatList.push_back(projectionMatrixList[camID]);
+//                            }
+//                            double x = double(person.getBodyCoord()[bdPartID].x);
+//                            double y = double(person.getBodyCoord()[bdPartID].y);
+                            double x = double(detectedCornerList[0][0].x);
+                            double y = double(detectedCornerList[0][0].y);
+                            cv::Point3d pt(x*P1.at<double>(0,0) + y*P1.at<double>(1,0) + P1.at<double>(2,0),
+                                        (x*P1.at<double>(0,1) + y*P1.at<double>(1,1) + P1.at<double>(2,1)),
+                                        (x*P1.at<double>(0,2) + y*P1.at<double>(1,2) + P1.at<double>(2,2)));
+                            pt/=(x*P1.at<double>(0,3) + y*P1.at<double>(1,3) + P1.at<double>(2,3));
+//                            pt.x +
+//                            cout << pt << endl;
                         }
                     }
                     cv::imshow("im", image);
@@ -1525,15 +1643,15 @@ void FootPrint::reconstruct3Dpose(){
             }
         }
         // 点群ウィジェット（白）を作成
-        cv::viz::WCloud bdCloud(cloud_mat, cv::viz::Color::blue());
-        cv::viz::WCloud Cloud(floor_cloud_mat, cv::viz::Color::green());
-
-        // 点群ウィジェットを画面へ追加
-        myWindow.showWidget("bd3Dcoords",bdCloud);
-        myWindow.showWidget("bd3Dcos",Cloud);
-
-        // 表示
-        myWindow.spin();
+//        cv::viz::WCloud bdCloud(cloud_mat, cv::viz::Color::blue());
+////        cv::viz::WCloud Cloud(floor_cloud_mat, cv::viz::Color::green());
+//
+//        // 点群ウィジェットを画面へ追加
+//        myWindow.showWidget("bd3Dcoords",bdCloud);
+////        myWindow.showWidget("bd3Dcos",Cloud);
+//
+//        // 表示
+//        myWindow.spin();
     }
 
 //    for(int imID = 0; imID < this->IMAGE_NUM; imID++ ) {
@@ -1793,7 +1911,13 @@ void FootPrint::projectPoints(CameraInfo &cam){
     cv::Mat pts;
     cv::projectPoints(this->model.vertices, cv::Mat(cam.camera._Rvec), cv::Mat(cam.camera._Tvec), cam.camera._A,
                       cam.camera._dist, cam.projPoints);
-//    cout << pts << endl;
+
+    //projPointsをMat_に格納
+    for(int i = 0; i < this->PLY_BLOCK_WIDTH; i++){
+        for(int j = 0; j < this->PLY_BLOCK_WIDTH; j++){
+            cam.projPointsMat(cv::Point(j, i) = cam.projPoints[i*this->PLY_BLOCK_WIDTH + j]);
+        }
+    }
 
     if(SHOW_REPROJECT_RESULT) {
         cv::Mat dummy = cv::imread("/home/yagi/CLionProjects/prismFootPrint/Data/Camera/gopro" +
@@ -1801,8 +1925,8 @@ void FootPrint::projectPoints(CameraInfo &cam){
         for (cv::Point2f pt : cam.projPoints) {
             cv::circle(dummy, pt, 2, cv::Scalar(0, 255, 0), 2);
         }
-        cv::imshow("projected points", dummy);
-        cv::waitKey();
+//        cv::imshow("projected points", dummy);
+//        cv::waitKey();
     }
 };
 
@@ -1825,20 +1949,20 @@ void FootPrint::outputTargetPersonInfo(CameraInfo &cam){
     }
 }
 
-void FootPrint::estimateStepPositions(){
-    for(int camID = 0; camID < this->CAMERA_NUM; camID++) {
-        string CAM_NAME = "cam" + to_string(camID + this->CAMERA_FIRST_ID);
-        CameraInfo *cm = &this->CameraInfoList[camID];
-
-        loadImages(this->_projects_path + "openPoseData/" + CAM_NAME + "/imagelist.txt", cm->imageList, FINISH_FRAME);
-        loadOpenPoseData(this->_projects_path + "openPoseData/" + CAM_NAME + "/human_pose_info.txt",
-                               cm->imageList, FINISH_FRAME);
-        trackTargetPerson(cm->imageList);
-//        outputTargetPersonInfo(*cm);
-        projectPoints(*cm);
-    }
-//    reconstruct3Dpose();
-    voting();
-//    countVotes();
-    paintFootPrint();
-}
+//void FootPrint::estimateStepPositions(){
+//    for(int camID = 0; camID < this->CAMERA_NUM; camID++) {
+//        string CAM_NAME = "cam" + to_string(camID + this->CAMERA_FIRST_ID);
+//        CameraInfo *cm = &this->CameraInfoList[camID];
+//
+//        loadImages(this->_projects_path + "openPoseData/" + CAM_NAME + "/imagelist.txt", cm->imageList, FINISH_FRAME);
+//        loadOpenPoseData(this->_projects_path + "openPoseData/" + CAM_NAME + "/human_pose_info.txt",
+//                               cm->imageList, FINISH_FRAME);
+//        trackTargetPerson(cm->imageList);
+////        outputTargetPersonInfo(*cm);
+//        projectPoints(*cm);
+//    }
+////    reconstruct3Dpose();
+//    voting();
+////    countVotes();
+//    paintFootPrint();
+//}

@@ -46,6 +46,8 @@ public:
     cv::Mat _A = cv::Mat::zeros(3,3,CV_64F);
     cv::Mat _P = cv::Mat::zeros(3,4,CV_64F);
     cv::Mat _dist = cv::Mat::zeros(1,4,CV_64F);
+    cv::Mat _Rmat = cv::Mat::zeros(3,3,CV_64F);
+    cv::Mat _Rinv = cv::Mat::zeros(3,3,CV_64F);
     cv::Vec3d _Tvec;
     cv::Vec3d _Rvec;
 

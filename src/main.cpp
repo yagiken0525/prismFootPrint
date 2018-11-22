@@ -4,14 +4,15 @@
 using namespace std;
 using namespace cv;
 
+
 int main() {
     FootPrint footPrint("test");
     footPrint.DIST_RANGE = 300; // 画像投影点の内どれくらいの距離の点を接地点とみなすか
-    footPrint.FRAME_RANGE = 20; // 近傍何フレームで投票数を合計するか
-    footPrint.VOTE_RANGE = 5; // 何投票されたら接地点とみなすか
+    footPrint.FRAME_RANGE = 1; // 近傍何フレームで投票数を合計するか
+    footPrint.VOTE_RANGE = 10; // 何投票されたら接地点とみなすか
     footPrint.CAMERA_NUM = 1; // 接地カメラ個数
     footPrint.CAMERA_FIRST_ID = 12; // 接地カメラの最小ID
-    footPrint.FINISH_FRAME = 30; //何フレームまで実行するか
+    footPrint.FINISH_FRAME = 300; //何フレームまで実行するか
     footPrint.SEARCHING_RECT = 50; //次のフレームで周囲何ピクセルまで探索するか
     footPrint.VIDEO_TYPE = ".MP4"; // 動画拡張子
     footPrint.ORIGINAL_IMAGE_WIDTH = 1920; // 入力動画の幅
@@ -22,12 +23,15 @@ int main() {
     footPrint.SHOW_TRACKING_RESULT = false; // tracking結果を表示するか
     footPrint.SHOW_REPROJECT_RESULT = true; // 点群の再投影結果を表示するか
     footPrint.CHECKER_BOARD_CALIBRATION = true; // 点群の再投影結果を表示するか
-    footPrint.PLY_BLOCK_WIDTH = 10; // 点群の領域分割幅
+    footPrint.PLY_BLOCK_WIDTH = 500; // 点群の領域分割幅
+    footPrint.POINT_DIST = 10; // 点群の領域分割幅
+
+    footPrint.voteMap = cv::Mat::zeros(footPrint.PLY_BLOCK_WIDTH * 2, footPrint.PLY_BLOCK_WIDTH * 2, CV_8UC(footPrint.VOTE_RANGE));
+    footPrint.stepMap = cv::Mat::ones(footPrint.PLY_BLOCK_WIDTH * 2, footPrint.PLY_BLOCK_WIDTH * 2, CV_8UC3);
 
     //カメラパラメータの初期化と読み込み
     footPrint.cameraInfoInit();
     footPrint.loadAllCameraParam();
-    footPrint.setImageResizehomography();
 
     //動画から画像への変換
 //    footPrint.videoToImage();
@@ -36,13 +40,10 @@ int main() {
 //    footPrint.detectHumanPose();
 
     //カメラ位置姿勢推定
-//    footPrint.estimateCameraPose();
+    footPrint.estimateCameraPose();
 
-    //床平面のplyファイル生成
-    cv::Mat3f plane = footPrint.generatePointCloudsAsMatrix(100, 50);
-    footPrint.model.readModel(footPrint._sfm_projects_path + "scene_mesh.ply");
-
-//    footPrint.model.readModelWithColor();
+    //床平面の点群生成
+    cv::Mat3f plane = footPrint.generatePointCloudsAsMatrix(footPrint.PLY_BLOCK_WIDTH, footPrint.POINT_DIST);
 
     for(int camID = 0; camID < footPrint.CAMERA_NUM; camID++) {
         string CAM_NAME = "cam" + to_string(camID + footPrint.CAMERA_FIRST_ID);
@@ -53,20 +54,22 @@ int main() {
         footPrint.trackTargetPerson(cm->imageList);
         footPrint.projectPoints(*cm);
     }
+
+    footPrint.estimateStepPositions();
+
+
     footPrint.voting();
 //    countVotes();
     footPrint.paintFootPrint();
 
 
-    //足あとの検出
-    footPrint.estimateStepPositions();
+
 
     return 0;
 }
 
 
 
-//    reconstruct3Dpose();
 
 //３次元復元
 //    footPrint.loadAllImages();

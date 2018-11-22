@@ -88,6 +88,10 @@ int Camera::loadCameraRt(std::string file_name){
     this->_Tvec = T;
     this->_Rvec = R;
 
+    cv::Rodrigues(this->_Rvec, this->_Rmat);
+    this->_Rinv = this->_Rmat.inv();
+
+
     return 1;
 }
 

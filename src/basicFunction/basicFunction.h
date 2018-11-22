@@ -56,6 +56,9 @@ namespace yagi {
     void some_filter(const cv::Mat& in, cv::Mat& out);
 
     void print_info(const cv::Mat& mat);
+
+    template<typename type>
+    void vectorSum(std::vector<type> vec);
 }
 
 #endif //MAINTEST_BASICFUNCTION_H
