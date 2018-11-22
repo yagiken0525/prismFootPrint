@@ -129,6 +129,7 @@ public:
     void estimateGroundPlane(cv::Mat points);
     void estimateStepPositions();
     void outputTargetPersonInfo(CameraInfo &cam);
+    cv::Mat3f generatePointCloudsAsMatrix(const int width, const int dist);
 
     std::vector<std::vector<cv::Point2f>> detectedCornerList;
     cv::Point3f imagePointTo3dPoint(cv::Point2f point);

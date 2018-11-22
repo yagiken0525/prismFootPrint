@@ -49,6 +49,8 @@ namespace yagi {
 
     void generatePointClouds(std::vector<cv::Point3f>& objectCorners, int H, int W, float SCALE, int Wstart = 0, int Hstart = 0);
 
+    cv::Mat3b generatePointCloudsAsMatrix(const int width);
+
     void generatePointCloudsAsBlocks(std::vector<cv::Point3f>& objectCorners, int H, int W, float SCALE, int Wstart = 0, int Hstart = 0, int BlockCol = 1, int BlockRow = 1);
 
     void some_filter(const cv::Mat& in, cv::Mat& out);

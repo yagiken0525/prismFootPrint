@@ -1283,12 +1283,22 @@ void FootPrint::estimateCameraPoseWithCheckerBoard() {
 void FootPrint::generatePlaneModel(){
     Model reconstructedModel;
     vector<cv::Point3f> planePoints;
-//    yagi::generatePointClouds(planePoints, 100, 100, 50, -100, -100);
+    yagi::generatePointClouds(planePoints, 100, 100, 50, -100, -100);
     yagi::generatePointCloudsAsBlocks(planePoints, 100, 100, 50, -100, -100, PLY_BLOCK_WIDTH, PLY_BLOCK_WIDTH);
     reconstructedModel.vertices = planePoints;
     reconstructedModel.savePly(this->_projects_path + "/planePoints.ply");
 }
 
+cv::Mat3f FootPrint::generatePointCloudsAsMatrix(const int width, const int dist){
+    cv::Mat plane = cv::Mat::zeros(width, width, CV_32FC3);
+    for (int i = 0; i < width; i++) {
+        for (int j = 0; j < width; j++) {
+            plane.at<cv::Vec3f>(i, j) = cv::Vec3f(-width + i*dist, -width + j*dist, 0);
+        }
+    }
+    cv::Mat3f planePt = plane;
+    return planePt;
+}
 //        //P-Mat求める
 //        cv::Mat Pmat = cv::Mat::zeros(3,4,CV_64F);
 //        cv::Mat matR;
@@ -1780,8 +1790,10 @@ void FootPrint::estimateGroundPlane(cv::Mat points){
 }
 
 void FootPrint::projectPoints(CameraInfo &cam){
+    cv::Mat pts;
     cv::projectPoints(this->model.vertices, cv::Mat(cam.camera._Rvec), cv::Mat(cam.camera._Tvec), cam.camera._A,
                       cam.camera._dist, cam.projPoints);
+//    cout << pts << endl;
 
     if(SHOW_REPROJECT_RESULT) {
         cv::Mat dummy = cv::imread("/home/yagi/CLionProjects/prismFootPrint/Data/Camera/gopro" +

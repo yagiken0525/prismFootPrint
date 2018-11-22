@@ -24,6 +24,86 @@ int main() {
     footPrint.CHECKER_BOARD_CALIBRATION = true; // 点群の再投影結果を表示するか
     footPrint.PLY_BLOCK_WIDTH = 10; // 点群の領域分割幅
 
+    //カメラパラメータの初期化と読み込み
+    footPrint.cameraInfoInit();
+    footPrint.loadAllCameraParam();
+    footPrint.setImageResizehomography();
+
+    //動画から画像への変換
+//    footPrint.videoToImage();
+
+    //OpenPoseによる検出
+//    footPrint.detectHumanPose();
+
+    //カメラ位置姿勢推定
+//    footPrint.estimateCameraPose();
+
+    //床平面のplyファイル生成
+    cv::Mat3f plane = footPrint.generatePointCloudsAsMatrix(100, 50);
+    footPrint.model.readModel(footPrint._sfm_projects_path + "scene_mesh.ply");
+
+//    footPrint.model.readModelWithColor();
+
+    for(int camID = 0; camID < footPrint.CAMERA_NUM; camID++) {
+        string CAM_NAME = "cam" + to_string(camID + footPrint.CAMERA_FIRST_ID);
+        FootPrint::CameraInfo* cm = &footPrint.CameraInfoList[camID];
+        footPrint.loadImages(footPrint._projects_path + "openPoseData/" + CAM_NAME + "/imagelist.txt", cm->imageList, footPrint.FINISH_FRAME);
+        footPrint.loadOpenPoseData(footPrint._projects_path + "openPoseData/" + CAM_NAME + "/human_pose_info.txt",
+                         cm->imageList, footPrint.FINISH_FRAME);
+        footPrint.trackTargetPerson(cm->imageList);
+        footPrint.projectPoints(*cm);
+    }
+    footPrint.voting();
+//    countVotes();
+    footPrint.paintFootPrint();
+
+
+    //足あとの検出
+    footPrint.estimateStepPositions();
+
+    return 0;
+}
+
+
+
+//    reconstruct3Dpose();
+
+//３次元復元
+//    footPrint.loadAllImages();
+//    footPrint.reconstruct3Dpose();
+//    }else if(command == "ESTIMATE_STEP_POINTS"){
+//    } if(1){
+//        footPrint.right_vote.resize(footPrint.model.vertices_num);
+//        footPrint.left_vote.resize(footPrint.model.vertices_num);
+//        footPrint.loadImages(footPrint._sfm_projects_path + "imagelist.txt");
+//        footPrint.loadCameraParam(footPrint._data_path + "camera_param.txt");
+//        footPrint.loadMultipleCameraRts(footPrint._sfm_projects_path + "camerapose.txt");
+//        footPrint.loadOpenPoseData(footPrint._sfm_projects_path + "human_pose_info.txt");
+//        footPrint.votedFrameInit();
+//
+//        footPrint.trackTargetPerson();
+//        footPrint.findFootPrint();
+//        footPrint.paintFootPrint();
+//        footPrint.printVoteRecord();
+//
+//    }else if(command == "EXTRACT_STEP_AREA") {
+//
+//        //色ついた部分の抽出
+//        footPrint.color = cv::Scalar(0, 0, 255);
+//        footPrint.model.readModelWithColor(footPrint._projects_path + "result/result_mesh.ply", footPrint.color);
+//        footPrint.savePointClouds();
+//        footPrint.calculateSteppedFrame(0);
+//        footPrint.savePlytoTxt(0);
+//        footPrint.model.vertices.clear();
+//
+//        footPrint.color = cv::Scalar(0, 255, 0);
+//        footPrint.model.readModelWithColor(footPrint._projects_path + "result/result_mesh.ply", footPrint.color);
+//        footPrint.savePointClouds();
+//        footPrint.calculateSteppedFrame(1);
+//        footPrint.savePlytoTxt(1);
+//    }
+
+
 //    cv::VideoCapture cap(0);//デバイスのオープン
 //    //cap.open(0);//こっちでも良い．
 //
@@ -73,69 +153,14 @@ int main() {
 //    T.at<float>(2, 3) = -2.0;  // Z座標の設定
 //    myWindow.setWidgetPose("Camera", cv::Affine3f(T));
 
-    //カメラパラメータの初期化と読み込み
-    footPrint.cameraInfoInit();
-    footPrint.loadAllCameraParam();
-    footPrint.setImageResizehomography();
-
-    //動画から画像への変換
-//    footPrint.videoToImage();
-
-    //OpenPoseによる検出
-//    footPrint.detectHumanPose();
-
-    //カメラ位置姿勢推定
-//    footPrint.estimateCameraPose();
-
-    //床平面のplyファイル生成
-    footPrint.generatePlaneModel();
-
-    //plyファイルの読み込み
-    footPrint.model.readModel(footPrint._projects_path + "planePoints.ply");
-
-    //plyファイルをブロックに分割
-
-    //足あとの検出
-    footPrint.estimateStepPositions();
-
-    return 0;
-}
-
-
-
-
-//３次元復元
-//    footPrint.loadAllImages();
-//    footPrint.reconstruct3Dpose();
-//    }else if(command == "ESTIMATE_STEP_POINTS"){
-//    } if(1){
-//        footPrint.model.readModel(footPrint._sfm_projects_path + "scene_mesh.ply");
-//        footPrint.right_vote.resize(footPrint.model.vertices_num);
-//        footPrint.left_vote.resize(footPrint.model.vertices_num);
-//        footPrint.loadImages(footPrint._sfm_projects_path + "imagelist.txt");
-//        footPrint.loadCameraParam(footPrint._data_path + "camera_param.txt");
-//        footPrint.loadMultipleCameraRts(footPrint._sfm_projects_path + "camerapose.txt");
-//        footPrint.loadOpenPoseData(footPrint._sfm_projects_path + "human_pose_info.txt");
-//        footPrint.votedFrameInit();
-//
-//        footPrint.trackTargetPerson();
-//        footPrint.findFootPrint();
-//        footPrint.paintFootPrint();
-//        footPrint.printVoteRecord();
-//
-//    }else if(command == "EXTRACT_STEP_AREA") {
-//
-//        //色ついた部分の抽出
-//        footPrint.color = cv::Scalar(0, 0, 255);
-//        footPrint.model.readModelWithColor(footPrint._projects_path + "result/result_mesh.ply", footPrint.color);
-//        footPrint.savePointClouds();
-//        footPrint.calculateSteppedFrame(0);
-//        footPrint.savePlytoTxt(0);
-//        footPrint.model.vertices.clear();
-//
-//        footPrint.color = cv::Scalar(0, 255, 0);
-//        footPrint.model.readModelWithColor(footPrint._projects_path + "result/result_mesh.ply", footPrint.color);
-//        footPrint.savePointClouds();
-//        footPrint.calculateSteppedFrame(1);
-//        footPrint.savePlytoTxt(1);
+//    footPrint.generatePlaneModel();
+//    for(int i = 0; i < plane.cols; i++){
+//        for(int j = 0; j < plane.rows; j++){
+//            cout << plane(cv::Point(j,i)) << endl;
+//        }
 //    }
+
+//plyファイルの読み込み
+//    footPrint.model.readModel(footPrint._projects_path + "planePoints.ply");
+
+//plyファイルをブロックに分割
