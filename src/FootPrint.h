@@ -12,7 +12,7 @@
 #include <iostream>
 #include <vector>
 
-#define CHANNEL 10
+#define CHANNEL 15
 
 struct Vote{
     cv::Vec3f vertice;
@@ -45,6 +45,7 @@ public:
     class myImageInfo : public ImageInfo{
     public:
         std::vector<Vote> voteList;
+        cv::Mat resultSizeIm;
     };
 
     class CameraInfo {
@@ -62,17 +63,29 @@ public:
         std::vector<VoteOfPoint> VoteOfPointsList;
     };
 
+    class StepInfo{
+    public:
+        int frame;
+        float stride;
+        float speed;
+        cv::Point2f stepPosition;
+    };
+    std::vector<StepInfo> stepInfoList;
+
     std::vector<FootPrint::CameraInfo> CameraInfoList;
 
     //しきい値
     float DIST_RANGE; // 画像投影点の内どれくらいの距離の点を接地点とみなすか
     int VOTE_RANGE; // 何投票されたら接地点とみなすか
-    int FRAME_RANGE; // 何投票されたら接地点とみなすか
+    int MIN_STRIDE;
+    int VISUALIZE_FRAMES;
+    int STEP_THRESHOLD; // 何投票されたら接地点とみなすか
     int CAMERA_NUM; // 接地カメラの個数
     int CAMERA_FIRST_ID; // 接地カメラの個数
     int IMAGE_NUM; // 接地カメラの個数
     int SEARCHING_RECT; // 接地カメラの個数
     std::string VIDEO_TYPE = "MP4"; // 接地カメラの個数
+    int VIDEO_FPS = 30; // 動画のfps
     bool FACE_PLY = false; // 出力をメッシュファイルにするかどうか
     int FINISH_FRAME = 5; // 出力をメッシュファイルにするかどうか
     float ORIGINAL_IMAGE_WIDTH = 1920; // 出力をメッシュファイルにするかどうか
@@ -84,8 +97,9 @@ public:
     bool SHOW_REPROJECT_RESULT;
     bool CHECKER_BOARD_CALIBRATION;
     int FLOOR_WIDTH;
-    int PLY_BLOCK_WIDTH = 500;
+    int PLANE_WIDTH = 500;
     int POINT_DIST = 10;
+    bool SHOW_TRAJECTORY;
 
 
     std::string _project_name;
@@ -96,8 +110,11 @@ public:
     std::string _camera_path;
     std::string _sfm_projects_path;
 
-    void vote(Camera* cm, cv::Point2f pt, const int imID);
-    void votingToMap(const int x, const int y, const int imID);
+    void renewResultInfoIm(cv::Mat im);
+    void showResult();
+    void InitVoteList();
+    void vote(Camera* cm, cv::Point2f pt, const int imID, const int bdID);
+    void votingToMap(const int x, const int y, const int imID, const int bdID);
     void estimateStepPositions();
     void voting();
     void countVotes();
@@ -138,8 +155,21 @@ public:
     void outputTargetPersonInfo(CameraInfo &cam);
     cv::Mat3f generatePointCloudsAsMatrix(const int width, const int dist);
 
-    cv::Mat voteMap;
+    cv::Point2f prevStep;
+    cv::Point2f prevProjectedPt;
+    cv::Point2f prevCoM;
+    cv::Point2f prevPrevStep;
+    int prevStepFrame;
+    int prevPrevStepFrame;
+    float walkingDistance;
+    int numOfSteps;
+    std::vector<std::vector<cv::Point2f>> stepedPointList;
+    std::vector<cv::Mat> voteMapList;
+    cv::Mat trajectoryMap;
     cv::Mat stepMap;
+    cv::Mat HeatMap;
+    cv::Mat HeatVoteMap;
+    cv::Mat ResultInfo;
     std::vector<std::vector<cv::Point2f>> detectedCornerList;
     cv::Point3f imagePointTo3dPoint(cv::Point2f point);
     cv::Point2f worldPointToImagePoint(cv::Point3f point, Camera* camera);
