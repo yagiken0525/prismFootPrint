@@ -168,6 +168,7 @@ public:
     std::vector<cv::Mat> voteMapList;
     cv::Mat trajectoryMap;
     cv::Mat stepMap;
+    cv::Mat originalStepMap;
     cv::Mat HeatMap;
     cv::Mat HeatVoteMap;
     cv::Mat ResultInfo;

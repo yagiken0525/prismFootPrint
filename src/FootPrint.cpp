@@ -457,13 +457,13 @@ void FootPrint::votingToMap(const int x, const int y, const int imID, const int 
     int stepedListPointer = imID % VISUALIZE_FRAMES;
     vector<cv::Point2f> stepedPoints = stepedPointList[stepedListPointer];
     cv::Vec3b color = getPointColor(bdID);
-    cv::Point2f projectedPt = cv::Point2f(y, x);
+    cv::Point2f projectedPt = cv::Point2f(x, y);
 
     for (int i = 0; i < VOTE_RANGE; i++) {
         for (int j = 0; j < VOTE_RANGE; j++) {
             int xIdx = x + i - (VOTE_RANGE/2);
             int yIdx = y + j - (VOTE_RANGE/2);
-            cv::Point2f stepPt(yIdx, xIdx);
+            cv::Point2f stepPt(xIdx, yIdx);
             voteMap->at<cv::Vec<unsigned char, CHANNEL>>(stepPt)[dstChannel] = 1;
             HeatVoteMap.at<float>(stepPt) += 1;
 //            cout << voteMap->at<cv::Vec<unsigned char, CHANNEL>>( stepPt ) << endl;
@@ -503,7 +503,7 @@ void FootPrint::votingToMap(const int x, const int y, const int imID, const int 
 //    stepMapから一定フレーム前の接地点を消去
     if(bdID % 2 == 1) {
         for (cv::Point2f pt : stepedPointList[stepedListPointer]) {
-            stepMap.at<cv::Vec3b>(pt) = cv::Vec3b(0, 0, 0);
+            stepMap.at<cv::Vec3b>(pt) = originalStepMap.at<cv::Vec3b>(pt);
         }
         //   trajectoryを表示
         if(SHOW_TRAJECTORY){
@@ -522,56 +522,56 @@ void FootPrint::votingToMap(const int x, const int y, const int imID, const int 
 }
 
 void FootPrint::voting() {
-    cout << "Voting..." << endl;
-    for (int ptID = 0; ptID < this->model.vertices.size(); ptID++) {
-        VoteOfPoint newPointVote;
-        this->model.VoteOfPointsList.push_back(newPointVote);
-
-        for (CameraInfo cm : CameraInfoList) {
-            VoteOfCamera newCameraVote;
-            this->model.VoteOfPointsList[ptID].push_back(newCameraVote);
-            votelist LvoteList;
-            votelist RvoteList;
-
-            for (ImageInfo im : cm.imageList) {
-                for (OpenPosePerson person: im.persons) {
-                    if (person.humanID == 1) {
-                        cv::Point2f pt = cm.projPoints[ptID];
-
-                        //右足
-                        cv::Point2f RlegPt = person.getBodyCoord()[21];
-                        RlegPt.x /= (IMAGE_WIDTH / ORIGINAL_IMAGE_WIDTH);
-                        RlegPt.y /= (IMAGE_HEIGHT / ORIGINAL_IMAGE_HEIGHT);
-
-                        //左足
-                        cv::Point2f LlegPt = person.getBodyCoord()[24];
-                        LlegPt.x *= (IMAGE_WIDTH / ORIGINAL_IMAGE_WIDTH);
-                        LlegPt.y *= (IMAGE_HEIGHT / ORIGINAL_IMAGE_HEIGHT);
-
-                        float dist;
-                        dist = yagi::calc2PointDistance(pt, LlegPt);
-                        if ((dist < this->DIST_RANGE) && (dist != 0.0)) {
-                            LvoteList.push_back(true);
-                        } else {
-                            LvoteList.push_back(false);
-                        }
-
-                        dist = yagi::calc2PointDistance(pt, RlegPt);
-                        if ((dist < this->DIST_RANGE) && (dist != 0.0)) {
-                            RvoteList.push_back(true);
-                        } else {
-                            RvoteList.push_back(false);
-                        }
-                    }
-                }
-            }
-            this->model.VoteOfPointsList[ptID][cm.camID]._LvoteList = LvoteList;
-            this->model.VoteOfPointsList[ptID][cm.camID]._RvoteList = RvoteList;
-        }
-
-        if( (ptID + 1) % (this->model.vertices.size()/100) == 0)
-            cout << (ptID + 1) / (this->model.vertices.size()/100) << " % " << endl;
-    }
+//    cout << "Voting..." << endl;
+//    for (int ptID = 0; ptID < this->model.vertices.size(); ptID++) {
+//        VoteOfPoint newPointVote;
+//        this->model.VoteOfPointsList.push_back(newPointVote);
+//
+//        for (CameraInfo cm : CameraInfoList) {
+//            VoteOfCamera newCameraVote;
+//            this->model.VoteOfPointsList[ptID].push_back(newCameraVote);
+//            votelist LvoteList;
+//            votelist RvoteList;
+//
+//            for (ImageInfo im : cm.imageList) {
+//                for (OpenPosePerson person: im.persons) {
+//                    if (person.humanID == 1) {
+//                        cv::Point2f pt = cm.projPoints[ptID];
+//
+//                        //右足
+//                        cv::Point2f RlegPt = person.getBodyCoord()[21];
+//                        RlegPt.x /= (IMAGE_WIDTH / ORIGINAL_IMAGE_WIDTH);
+//                        RlegPt.y /= (IMAGE_HEIGHT / ORIGINAL_IMAGE_HEIGHT);
+//
+//                        //左足
+//                        cv::Point2f LlegPt = person.getBodyCoord()[24];
+//                        LlegPt.x *= (IMAGE_WIDTH / ORIGINAL_IMAGE_WIDTH);
+//                        LlegPt.y *= (IMAGE_HEIGHT / ORIGINAL_IMAGE_HEIGHT);
+//
+//                        float dist;
+//                        dist = yagi::calc2PointDistance(pt, LlegPt);
+//                        if ((dist < this->DIST_RANGE) && (dist != 0.0)) {
+//                            LvoteList.push_back(true);
+//                        } else {
+//                            LvoteList.push_back(false);
+//                        }
+//
+//                        dist = yagi::calc2PointDistance(pt, RlegPt);
+//                        if ((dist < this->DIST_RANGE) && (dist != 0.0)) {
+//                            RvoteList.push_back(true);
+//                        } else {
+//                            RvoteList.push_back(false);
+//                        }
+//                    }
+//                }
+//            }
+//            this->model.VoteOfPointsList[ptID][cm.camID]._LvoteList = LvoteList;
+//            this->model.VoteOfPointsList[ptID][cm.camID]._RvoteList = RvoteList;
+//        }
+//
+//        if( (ptID + 1) % (this->model.vertices.size()/100) == 0)
+//            cout << (ptID + 1) / (this->model.vertices.size()/100) << " % " << endl;
+//    }
 }
 
 void FootPrint::countVotes(){
@@ -1569,12 +1569,13 @@ cv::Point3f estimate3Dcoord(cv::Mat *A, cv::Mat *R, cv::Mat *T, cv::Point2f pt){
 };
 
 void FootPrint::vote(Camera* cm, cv::Point2f pt, const int imID, const int bdID){
+    //3次元位置求める
     cv::Point3f planePt = estimate3Dcoord(&cm->_A, &cm->_Rmat, &cm->_T, pt);
-    planePt.x += (PLANE_WIDTH * POINT_DIST);
-//    planePt.y *= -1; //座標系をカメラ向きに合わせている
-    planePt.y += (PLANE_WIDTH * POINT_DIST);
-    int xIdx = int(planePt.x / 10);
-    int yIdx = int(planePt.y / 10);
+
+    //画像位置求める
+    int xIdx = int(planePt.x / POINT_DIST) + PLANE_WIDTH;
+    int yIdx = int(planePt.y / POINT_DIST) + PLANE_WIDTH;
+
     votingToMap(xIdx, yIdx, imID, bdID);
 };
 
@@ -1594,11 +1595,11 @@ void FootPrint::InitVoteList() {
             cv::Point3f pt = estimate3Dcoord(&cm._A, &cm._Rmat, &cm._T, person.getBodyCoord()[21]);
             pt.x += (PLANE_WIDTH * POINT_DIST);
             pt.y += (PLANE_WIDTH * POINT_DIST);
-            prevStep = cv::Point2f(pt.y/10, pt.x/10);
+            prevStep = cv::Point2f(pt.x/10, pt.y/10);
             pt = estimate3Dcoord(&cm._A, &cm._Rmat, &cm._T, person.getBodyCoord()[24]);
             pt.x += (PLANE_WIDTH * POINT_DIST);
             pt.y += (PLANE_WIDTH * POINT_DIST);
-            prevPrevStep = cv::Point2f(pt.y/10, pt.x/10);
+            prevPrevStep = cv::Point2f(pt.x/10, pt.y/10);
 //            cout << prevStep << endl;
 //            cout << prevPrevStep << endl;
             StepInfo firstStep;
@@ -1620,13 +1621,21 @@ void FootPrint::InitVoteList() {
 void FootPrint::showResult(){
     int imW = PLANE_WIDTH * 2;
     cv::Mat base(imW * 2, imW * 2, CV_8UC3);
-
     cv::Mat roi1(base, cv::Rect(0 , 0 , imW , imW) );
-    trajectoryMap.copyTo(roi1);
+    cv::Mat trajDummy;
+    cv::Mat stepDummy;
+    cv::Mat heatDummy;
+    cv::flip(trajectoryMap.t(), trajDummy, 0);
+    trajDummy.copyTo(roi1);
+//    trajectoryMap.copyTo(roi1);
     cv::Mat roi2( base,cv::Rect(imW , 0 , imW , imW) );
-    stepMap.copyTo(roi2);
+    cv::flip(stepMap.t(), stepDummy, 0);
+    stepDummy.copyTo(roi2);
+//    stepMap.copyTo(roi2);
     cv::Mat roi3( base,cv::Rect(0 , imW , imW , imW) );
-    HeatMap.copyTo(roi3);
+    cv::flip(HeatMap.t(), heatDummy, 0);
+    heatDummy.copyTo(roi3);
+//    HeatMap.copyTo(roi3);
     cv::Mat roi4( base,cv::Rect(imW , imW , imW , imW) );
     ResultInfo.copyTo(roi4);
 
@@ -1679,6 +1688,8 @@ void FootPrint::estimateStepPositions(){
                     vote(&cm, person.getBodyCoord()[24], imID, 24);
                 }
             }
+
+            //HeatMap処理
             int votedPt = imID * (VOTE_RANGE * VOTE_RANGE);
             for(int i = 0; i < HeatVoteMap.cols; i++){
                 for(int j = 0; j < HeatVoteMap.rows; j++){
@@ -2094,22 +2105,26 @@ void FootPrint::projectPoints(CameraInfo &cam){
         vector<cv::Point2f> projPtList;
         projPtList.push_back(cam.projPoints[0]);
         projPtList.push_back(cam.projPoints[((PLANE_WIDTH * 2)) - 1]);
-        projPtList.push_back(cam.projPoints[(PLANE_WIDTH * 2) * (PLANE_WIDTH * 2) - (PLANE_WIDTH * 2)]);
         projPtList.push_back(cam.projPoints[(PLANE_WIDTH * 2 * PLANE_WIDTH * 2) - 1]);
+        projPtList.push_back(cam.projPoints[(PLANE_WIDTH * 2) * (PLANE_WIDTH * 2) - (PLANE_WIDTH * 2)]);
+
 
         vector<cv::Point2f> planePtList;
-        planePtList.push_back(cv::Point2f(0, 0));
         planePtList.push_back(cv::Point2f(PLANE_WIDTH * 2, 0));
+        planePtList.push_back(cv::Point2f(0, 0));
         planePtList.push_back(cv::Point2f(0, PLANE_WIDTH * 2));
         planePtList.push_back(cv::Point2f(PLANE_WIDTH * 2, PLANE_WIDTH * 2));
+
         cv::Mat H = cv::findHomography(planePtList, projPtList);
 
         cv::Mat warped;
         cv::warpPerspective(dummy, warped, H.inv(), stepMap.size());
         stepMap = warped.clone();
+
         trajectoryMap = warped.clone();
-        HeatMap = warped.clone();
+//        HeatMap = warped.clone();
     }
+    originalStepMap = stepMap.clone();
 
 };
 

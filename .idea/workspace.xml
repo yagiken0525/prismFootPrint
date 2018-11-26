@@ -20,7 +20,6 @@
   <component name="ChangeListManager">
     <list default="true" id="c11982e1-95d6-425a-a829-db32aceacb09" name="Default" comment="">
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/README.md" afterPath="$PROJECT_DIR$/README.md" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/FootPrint.cpp" afterPath="$PROJECT_DIR$/src/FootPrint.cpp" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/FootPrint.h" afterPath="$PROJECT_DIR$/src/FootPrint.h" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main.cpp" afterPath="$PROJECT_DIR$/src/main.cpp" />
@@ -35,11 +34,11 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="main.cpp" pinned="false" current-in-tab="false">
+      <file leaf-file-name="main.cpp" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/main.cpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="221">
-              <caret line="67" column="23" lean-forward="false" selection-start-line="67" selection-start-column="23" selection-end-line="67" selection-end-column="23" />
+            <state relative-caret-position="85">
+              <caret line="11" column="35" lean-forward="false" selection-start-line="11" selection-start-column="35" selection-end-line="11" selection-end-column="35" />
               <folding>
                 <element signature="e#0#19#0" expanded="true" />
               </folding>
@@ -67,11 +66,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="FootPrint.cpp" pinned="false" current-in-tab="true">
+      <file leaf-file-name="FootPrint.cpp" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/FootPrint.cpp">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="432">
-              <caret line="479" column="37" lean-forward="true" selection-start-line="479" selection-start-column="37" selection-end-line="479" selection-end-column="37" />
+              <caret line="569" column="11" lean-forward="true" selection-start-line="569" selection-start-column="11" selection-end-line="569" selection-end-column="11" />
               <folding>
                 <element signature="e#39#61#0" expanded="true" />
               </folding>
@@ -135,8 +134,8 @@
       <file leaf-file-name="FootPrint.h" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/FootPrint.h">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="203">
-              <caret line="102" column="30" lean-forward="false" selection-start-line="102" selection-start-column="30" selection-end-line="102" selection-end-column="30" />
+            <state relative-caret-position="466">
+              <caret line="88" column="32" lean-forward="true" selection-start-line="88" selection-start-column="32" selection-end-line="89" selection-end-column="32" />
               <folding>
                 <element signature="e#112#141#0" expanded="true" />
               </folding>
@@ -148,9 +147,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>points</find>
-      <find>cam</find>
-      <find>LOAD_LIMIT</find>
       <find>imshow</find>
       <find>cv::imshow</find>
       <find>577</find>
@@ -175,9 +171,12 @@
       <find>Mat</find>
       <find>img1.rows</find>
       <find>ptList</find>
-      <find>voteMap</find>
+      <find>ORIGI</find>
       <find>projPtList</find>
+      <find>SEAR</find>
       <find>PLY_BLOCK_WIDTH</find>
+      <find>DIST_RANGE</find>
+      <find>voteMap</find>
     </findStrings>
     <replaceStrings>
       <replace>64</replace>
@@ -208,8 +207,8 @@
       <replace>cv::Mat</replace>
       <replace>imW</replace>
       <replace>projPtList</replace>
-      <replace>Vec3b</replace>
       <replace>planePtList</replace>
+      <replace>Vec3b</replace>
     </replaceStrings>
     <dirStrings>
       <dir>$PROJECT_DIR$/Data/Projects</dir>
@@ -464,7 +463,7 @@
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="183811000" />
+    <option name="totallyTimeSpent" value="186837000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="1984" y="-4" width="1857" height="1085" extended-state="6" />
@@ -827,22 +826,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/Data/Projects/test/openPoseData/cam10/human_pose_info.txt">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-41939">
-          <caret line="11" column="25" lean-forward="false" selection-start-line="11" selection-start-column="25" selection-end-line="11" selection-end-column="25" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$USER_HOME$/UserLibrary/opencv-3.4.3/modules/core/src/matrix.cpp">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="196">
-          <caret line="839" column="0" lean-forward="false" selection-start-line="839" selection-start-column="0" selection-end-line="839" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$USER_HOME$/UserLibrary/opencv-3.4.3/modules/imgproc/include/opencv2/imgproc.hpp">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="196">
@@ -878,10 +861,36 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/Data/Projects/test/openPoseData/cam10/human_pose_info.txt">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-41939">
+          <caret line="11" column="25" lean-forward="false" selection-start-line="11" selection-start-column="25" selection-end-line="11" selection-end-column="25" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/UserLibrary/opencv-3.4.3/modules/core/src/matrix.cpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="196">
+          <caret line="839" column="0" lean-forward="false" selection-start-line="839" selection-start-column="0" selection-end-line="839" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/FootPrint.cpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="432">
+          <caret line="569" column="11" lean-forward="true" selection-start-line="569" selection-start-column="11" selection-end-line="569" selection-end-column="11" />
+          <folding>
+            <element signature="e#39#61#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/src/FootPrint.h">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="203">
-          <caret line="102" column="30" lean-forward="false" selection-start-line="102" selection-start-column="30" selection-end-line="102" selection-end-column="30" />
+        <state relative-caret-position="466">
+          <caret line="88" column="32" lean-forward="true" selection-start-line="88" selection-start-column="32" selection-end-line="89" selection-end-column="32" />
           <folding>
             <element signature="e#112#141#0" expanded="true" />
           </folding>
@@ -890,20 +899,10 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/main.cpp">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="221">
-          <caret line="67" column="23" lean-forward="false" selection-start-line="67" selection-start-column="23" selection-end-line="67" selection-end-column="23" />
+        <state relative-caret-position="85">
+          <caret line="11" column="35" lean-forward="false" selection-start-line="11" selection-start-column="35" selection-end-line="11" selection-end-column="35" />
           <folding>
             <element signature="e#0#19#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/FootPrint.cpp">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="432">
-          <caret line="479" column="37" lean-forward="true" selection-start-line="479" selection-start-column="37" selection-end-line="479" selection-end-column="37" />
-          <folding>
-            <element signature="e#39#61#0" expanded="true" />
           </folding>
         </state>
       </provider>

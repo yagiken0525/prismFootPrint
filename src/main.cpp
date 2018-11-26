@@ -7,54 +7,43 @@ using namespace cv;
 
 int main() {
     FootPrint footPrint("test");
-    footPrint.DIST_RANGE = 300; // 画像投影点の内どれくらいの距離の点を接地点とみなすか
     footPrint.STEP_THRESHOLD = 10; // 接地判定のための投票数しきい値
-    footPrint.VOTE_RANGE = 5; // 近接何ピクセルまで投票するか
-    footPrint.MIN_STRIDE = 25; // 一歩とカウントする際の最低歩幅(cm)
-    footPrint.VISUALIZE_FRAMES = 100; // 最近何フレーム分の接地点を表示するか
+    footPrint.VOTE_RANGE = 5; // 近接何ピクセルまで投票するか(px)
+    footPrint.MIN_STRIDE = 25; // 一歩とカウントする際の最小歩幅(cm)
+    footPrint.VISUALIZE_FRAMES = 100; // 近傍何フレーム分の接地点を表示するか
     footPrint.CAMERA_NUM = 1; // 接地カメラ個数
     footPrint.CAMERA_FIRST_ID = 12; // 接地カメラの最小ID
     footPrint.FINISH_FRAME = 600; //何フレームまで実行するか
-    footPrint.SEARCHING_RECT = 50; //次のフレームで周囲何ピクセルまで探索するか
     footPrint.VIDEO_TYPE = ".MP4"; // 動画拡張子
-    footPrint.VIDEO_FPS = 30; // 動画拡張子
-    footPrint.ORIGINAL_IMAGE_WIDTH = 1920; // 入力動画の幅
-    footPrint.ORIGINAL_IMAGE_HEIGHT = 1080; //　入力動画の高さ
-    footPrint.IMAGE_WIDTH = 1920; //　入力動画の高さ
-    footPrint.IMAGE_HEIGHT = 1080; //　入力動画の高さ
+    footPrint.VIDEO_FPS = 30; // 動画fps
     footPrint.SELECT_TRACKER_BY_CLICKING = false; // tracking対象を手動で指定するか
     footPrint.SHOW_TRACKING_RESULT = false; // tracking結果を表示するか
     footPrint.SHOW_REPROJECT_RESULT = false; // 点群の再投影結果を表示するか
-    footPrint.CHECKER_BOARD_CALIBRATION = true; // キャリブレーション行うか
-    footPrint.PLANE_WIDTH = 200; // 点群の領域分割幅
-    footPrint.POINT_DIST = 10; // 点群の領域分割幅
+    footPrint.CHECKER_BOARD_CALIBRATION = true; // チェッカーボードでキャリブレーション行うか
+    footPrint.PLANE_WIDTH = 200; // 点群領域1辺の1/2
+    footPrint.POINT_DIST = 10; // 点群の領域分割幅(mm)
     footPrint.SHOW_TRAJECTORY = true; // trajectory表示
     footPrint.PLOT_ON_WARPED_IMAGE = true; // 床画像に足あと投影
 
-//    footPrint.voteMap = cv::Mat::zeros(footPrint.PLANE_WIDTH * 2, footPrint.PLANE_WIDTH * 2, CV_8UC(CHANNEL));
     footPrint.trajectoryMap = cv::Mat::ones(footPrint.PLANE_WIDTH * 2, footPrint.PLANE_WIDTH * 2, CV_8UC3);
     footPrint.stepMap = cv::Mat::ones(footPrint.PLANE_WIDTH * 2, footPrint.PLANE_WIDTH * 2, CV_8UC3);
     footPrint.HeatMap = cv::Mat::ones(footPrint.PLANE_WIDTH * 2, footPrint.PLANE_WIDTH * 2, CV_8UC3);
     footPrint.HeatVoteMap = cv::Mat::zeros(footPrint.PLANE_WIDTH * 2, footPrint.PLANE_WIDTH * 2, CV_32F);
     footPrint.ResultInfo = cv::Mat::ones(footPrint.PLANE_WIDTH * 2, footPrint.PLANE_WIDTH * 2, CV_8UC3);
 
-//    footPrint.trajectoryMap * 255;
     //カメラパラメータの初期化と読み込み
     footPrint.cameraInfoInit();
     footPrint.loadAllCameraParam();
 
-    //動画から画像への変換
-//    footPrint.videoToImage();
-
-    //OpenPoseによる検出
-//    footPrint.detectHumanPose();
-
-    //カメラ位置姿勢推定
-//    footPrint.estimateCameraPose();
+    //初回のみ行う
+//    footPrint.videoToImage();   //動画から画像への変換
+//    footPrint.detectHumanPose();    //OpenPoseによる検出
+//    footPrint.estimateCameraPose();//カメラ位置姿勢推定
 
     //床平面の点群生成
     cv::Mat3f plane = footPrint.generatePointCloudsAsMatrix(footPrint.PLANE_WIDTH, footPrint.POINT_DIST);
 
+    //データのロードなど
     for(int camID = 0; camID < footPrint.CAMERA_NUM; camID++) {
         string CAM_NAME = "cam" + to_string(camID + footPrint.CAMERA_FIRST_ID);
         FootPrint::CameraInfo* cm = &footPrint.CameraInfoList[camID];
@@ -65,15 +54,8 @@ int main() {
         footPrint.projectPoints(*cm);
     }
 
+    //接地位置推定
     footPrint.estimateStepPositions();
-
-
-//    footPrint.voting();
-//    countVotes();
-//    footPrint.paintFootPrint();
-
-
-
 
     return 0;
 }
