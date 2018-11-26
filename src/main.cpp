@@ -14,7 +14,7 @@ int main() {
     footPrint.VISUALIZE_FRAMES = 100; // 最近何フレーム分の接地点を表示するか
     footPrint.CAMERA_NUM = 1; // 接地カメラ個数
     footPrint.CAMERA_FIRST_ID = 12; // 接地カメラの最小ID
-    footPrint.FINISH_FRAME = 6; //何フレームまで実行するか
+    footPrint.FINISH_FRAME = 600; //何フレームまで実行するか
     footPrint.SEARCHING_RECT = 50; //次のフレームで周囲何ピクセルまで探索するか
     footPrint.VIDEO_TYPE = ".MP4"; // 動画拡張子
     footPrint.VIDEO_FPS = 30; // 動画拡張子
@@ -24,11 +24,12 @@ int main() {
     footPrint.IMAGE_HEIGHT = 1080; //　入力動画の高さ
     footPrint.SELECT_TRACKER_BY_CLICKING = false; // tracking対象を手動で指定するか
     footPrint.SHOW_TRACKING_RESULT = false; // tracking結果を表示するか
-    footPrint.SHOW_REPROJECT_RESULT = true; // 点群の再投影結果を表示するか
-    footPrint.CHECKER_BOARD_CALIBRATION = true; // 点群の再投影結果を表示するか
+    footPrint.SHOW_REPROJECT_RESULT = false; // 点群の再投影結果を表示するか
+    footPrint.CHECKER_BOARD_CALIBRATION = true; // キャリブレーション行うか
     footPrint.PLANE_WIDTH = 200; // 点群の領域分割幅
     footPrint.POINT_DIST = 10; // 点群の領域分割幅
-    footPrint.SHOW_TRAJECTORY = true; // 点群の領域分割幅
+    footPrint.SHOW_TRAJECTORY = true; // trajectory表示
+    footPrint.PLOT_ON_WARPED_IMAGE = true; // 床画像に足あと投影
 
 //    footPrint.voteMap = cv::Mat::zeros(footPrint.PLANE_WIDTH * 2, footPrint.PLANE_WIDTH * 2, CV_8UC(CHANNEL));
     footPrint.trajectoryMap = cv::Mat::ones(footPrint.PLANE_WIDTH * 2, footPrint.PLANE_WIDTH * 2, CV_8UC3);

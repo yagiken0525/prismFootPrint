@@ -1614,6 +1614,7 @@ void FootPrint::InitVoteList() {
     prevStepFrame = 0;
     prevPrevStepFrame = 0;
     prevCoM = (prevStep + prevPrevStep)/2;
+
 }
 
 void FootPrint::showResult(){
@@ -2080,40 +2081,35 @@ void FootPrint::projectPoints(CameraInfo &cam){
                                to_string(cam.camID + this->CAMERA_FIRST_ID) + "/image0000.jpg");
 
     if(SHOW_REPROJECT_RESULT) {
-
-//        int ptID = 0;
-//        for (cv::Point2f pt : cam.projPoints) {
-//            cv::circle(dummy, pt, 2, cv::Scalar(0, 255, 0), 2);
-////            cout << ptID++ << endl;
-////            cv::imshow("projected points", dummy);
-////            cv::waitKey();
-//
-//        }
-
+        int ptID = 0;
+        for (cv::Point2f pt : cam.projPoints) {
+            cv::circle(dummy, pt, 2, cv::Scalar(0, 255, 0), 2);
+        }
+        cv::imshow("projected points", dummy);
+        cv::waitKey();
     }
 
-    //ワーピングのための4点
-    vector<cv::Point2f> projPtList;
-    projPtList.push_back(cam.projPoints[0]);
-    projPtList.push_back(cam.projPoints[((PLANE_WIDTH * 2) - 1)]);
+    if(PLOT_ON_WARPED_IMAGE) {
+        //ワーピングのための4点
+        vector<cv::Point2f> projPtList;
+        projPtList.push_back(cam.projPoints[0]);
+        projPtList.push_back(cam.projPoints[((PLANE_WIDTH * 2)) - 1]);
+        projPtList.push_back(cam.projPoints[(PLANE_WIDTH * 2) * (PLANE_WIDTH * 2) - (PLANE_WIDTH * 2)]);
+        projPtList.push_back(cam.projPoints[(PLANE_WIDTH * 2 * PLANE_WIDTH * 2) - 1]);
 
-    projPtList.push_back(cam.projPoints[(PLANE_WIDTH * 2) * PLANE_WIDTH ]);
-    projPtList.push_back(cam.projPoints[(PLANE_WIDTH* 2 * PLANE_WIDTH * 2) - 1]);
+        vector<cv::Point2f> planePtList;
+        planePtList.push_back(cv::Point2f(0, 0));
+        planePtList.push_back(cv::Point2f(PLANE_WIDTH * 2, 0));
+        planePtList.push_back(cv::Point2f(0, PLANE_WIDTH * 2));
+        planePtList.push_back(cv::Point2f(PLANE_WIDTH * 2, PLANE_WIDTH * 2));
+        cv::Mat H = cv::findHomography(planePtList, projPtList);
 
-    vector<cv::Point2f> planePtList;
-    planePtList.push_back(cv::Point2f(0,0));
-
-    planePtList.push_back(cv::Point2f(PLANE_WIDTH*2,0));
-    planePtList.push_back(cv::Point2f(0,PLANE_WIDTH*2));
-
-    planePtList.push_back(cv::Point2f(PLANE_WIDTH*2,PLANE_WIDTH*2));
-    cv::Mat H = cv::findHomography(planePtList, projPtList);
-
-
-    cv::Mat warped;
-    cv::warpPerspective(dummy, warped, H.inv(), stepMap.size());
-    cv::imshow("a", warped);
-    cv::waitKey();
+        cv::Mat warped;
+        cv::warpPerspective(dummy, warped, H.inv(), stepMap.size());
+        stepMap = warped.clone();
+        trajectoryMap = warped.clone();
+        HeatMap = warped.clone();
+    }
 
 };
 

@@ -100,6 +100,7 @@ public:
     int PLANE_WIDTH = 500;
     int POINT_DIST = 10;
     bool SHOW_TRAJECTORY;
+    bool PLOT_ON_WARPED_IMAGE;
 
 
     std::string _project_name;
