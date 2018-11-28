@@ -37,7 +37,7 @@ int main() {
 
     //初回のみ行う
 //    footPrint.videoToImage();   //動画から画像への変換
-//    footPrint.detectHumanPose();    //OpenPoseによる検出
+    footPrint.detectHumanPose();    //OpenPoseによる検出
 //    footPrint.estimateCameraPose();//カメラ位置姿勢推定
 
     //床平面の点群生成

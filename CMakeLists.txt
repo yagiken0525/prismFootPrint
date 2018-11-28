@@ -30,6 +30,8 @@ if (${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
             )
 endif()
 
+#set(OpenPose_DIR /home/yagi/UserLibrary/openpose/build/cmake)
+
 find_package(GFlags)
 find_package(Glog)
 find_package(OpenPose REQUIRED)
@@ -54,7 +56,7 @@ target_link_libraries(${PROJECT_NAME} Openpose)
 target_link_libraries(${PROJECT_NAME} VideoToImage)
 #target_link_libraries(${PROJECT_NAME} OpenMVG)
 target_link_libraries(${PROJECT_NAME} PointCloud)
-target_link_libraries(${PROJECT_NAME} ${OpenCV_LIBS})
+#target_link_libraries(${PROJECT_NAME} ${OpenCV_LIBS})
 target_link_libraries(${PROJECT_NAME} ${OpenMVG_LIBS})
 #message(STATUS "OpenMVG_DIR: ${OpenMVG_LIBS}")
 

@@ -280,7 +280,7 @@ int FootPrint::trackTargetPerson(vector<ImageInfo>& imageInfoList){
                 preHb = minHb;
                 target_found = true;
                 for (cv::Point2f pt : im.persons[minId].getBodyCoord()) {
-                    cv::circle(im.image, pt, 2, colors[3], 2);
+                    cv::circle(im.image, pt, 4, colors[3], 4);
                 }
 //                cv::imshow("target_person", im.image);
 //                cv::waitKey(0);
@@ -478,6 +478,7 @@ void FootPrint::votingToMap(const int x, const int y, const int imID, const int 
                 float distToPrevPrevStep = yagi::calc2PointDistance(prevPrevStep, stepPt);
                 if((distToPrevStep > MIN_STRIDE) && (distToPrevPrevStep > MIN_STRIDE)){
                     StepInfo newStep;
+//                    cv::line(trajectoryMap, prevStep, stepPt, cv::Scalar(0, 0, 255), 1);
                     prevPrevStep = prevStep;
                     prevStep = stepPt;
                     walkingDistance += distToPrevStep;
@@ -1184,6 +1185,14 @@ void FootPrint::calculateSteppedFrame(int id){
 void FootPrint::videoToImage(){
     for (int camID = this->CAMERA_FIRST_ID; camID < this->CAMERA_FIRST_ID + this->CAMERA_NUM; camID++) {
         string videoName = "cam" + to_string(camID);
+
+        //ディレクトリ作成
+        const char *cstr = (this->_projects_path + "images/").c_str();
+        if (mkdir(cstr, 0777) == 0) {
+            printf("directory correctly generated\n");
+        } else {
+            printf("directory already exists\n");
+        }
         videoToImage::videoToImage(
                 this->_video_path + videoName + this->VIDEO_TYPE,
                 this->_projects_path + "images/" + videoName
