@@ -1,0 +1,2 @@
+/usr/bin/ar qc libReconstruction.a  CMakeFiles/Reconstruction.dir/Reconstruction.cpp.o
+/usr/bin/ranlib libReconstruction.a

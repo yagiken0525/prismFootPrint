@@ -1,0 +1,2 @@
+/usr/bin/ar qc libOpenpose.a  CMakeFiles/Openpose.dir/OpenPosePerson.cpp.o CMakeFiles/Openpose.dir/exportHumanPoseTxt.cpp.o
+/usr/bin/ranlib libOpenpose.a

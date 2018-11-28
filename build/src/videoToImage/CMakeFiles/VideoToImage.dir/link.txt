@@ -1,0 +1,2 @@
+/usr/bin/ar qc libVideoToImage.a  CMakeFiles/VideoToImage.dir/videoToImage.cpp.o CMakeFiles/VideoToImage.dir/trimVideo.cpp.o
+/usr/bin/ranlib libVideoToImage.a
