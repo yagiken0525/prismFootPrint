@@ -8,6 +8,8 @@
 #include "basicFunction/basicFunction.h"
 #include "openPose/myOpenPose.h"
 #include <opencv2/sfm.hpp>
+#include <openpose/core/array.hpp>
+
 
 using namespace std;
 
@@ -1299,6 +1301,72 @@ void FootPrint::estimateCameraPoseWithClickingPoints(){
     }
 }
 
+void FootPrint::estimateCameraPoseWithImage(Camera& cm) {
+
+    cv::Mat image;
+    cv::VideoCapture capture(0); // USBカメラのオープン
+    capture.set(CV_CAP_PROP_FRAME_WIDTH, 800);
+    capture.set(CV_CAP_PROP_FRAME_HEIGHT, 600);
+    while(1){
+        capture >> image;
+        cv::imshow("checker board", image);
+        int k = cv::waitKey(1);
+        if(k == 115){
+            capture.release();
+            break;
+        }
+    }
+
+    int W = 9;
+    int H = 6;
+    float SCALE = 100.0;
+
+    //チェッカーポイントの座標格納
+    yagi::generatePointClouds(objectCorners, H, W, SCALE);
+
+    //チェッカーボード検出
+    vector<cv::Point2f> detectedCorners;
+    cv::findChessboardCorners(image, cv::Size(W, H), detectedCorners);
+    detectedCornerList.push_back(detectedCorners);
+    cv::drawChessboardCorners(image, cv::Size(W,H), detectedCorners, true);
+    cv::imshow("chess board", image);
+    cv::waitKey(0);
+
+    //カメラ位置姿勢推定
+    //Rt算出
+    cv::Mat R, T;
+    cv::solvePnP(objectCorners,
+                 detectedCorners,
+                 cm._A,
+                 cm._dist,
+                 R,
+                 T);
+    cm._R = R;
+    cm._T = T;
+    cm.outputRt(this->_camera_path + "/" + _project_name + "/cameraRt.txt");
+
+    vector<cv::Point2f> projectPts;
+    cv::projectPoints(objectCorners,
+                      R,
+                      T,
+                      cm._A,
+                      cm._dist,
+                      projectPts);
+
+    int ptID = 0;
+    for(cv::Point2f pt : projectPts){
+        if(ptID == 0){
+            cv::circle(image, pt, 2, cv::Scalar(255, 0, 0), 2);
+
+        }else {
+            cv::circle(image, pt, 2, cv::Scalar(0, 255, 0), 2);
+        }
+        ptID ++;
+    }
+    cv::imshow("projected points", image);
+    cv::waitKey();
+}
+
 
 void FootPrint::estimateCameraPoseWithCheckerBoard() {
 //    this->loadIntrinsicCameraParam();
@@ -1388,6 +1456,183 @@ void FootPrint::generatePlaneModel(){
     yagi::generatePointCloudsAsBlocks(planePoints, 100, 100, 50, -100, -100, PLANE_WIDTH, PLANE_WIDTH);
     reconstructedModel.vertices = planePoints;
     reconstructedModel.savePly(this->_projects_path + "/planePoints.ply");
+}
+
+void  DetectTargetPerson(op::Array<float>& poses, ImageInfo& imInfo, OpenPosePerson& target){
+    int peopleNum = poses.getSize()[0];
+    for(int personID = 0; personID < peopleNum; personID++) {
+        OpenPosePerson newPerson;
+        for(int partID = 0; partID < 25; partID++) {
+            cv::Point2f pt(poses[(personID * 75) + (partID * 3)], poses[(personID * 75) + (partID * 3) + 1]);
+            newPerson._body_parts_coord.push_back(pt);
+            newPerson._probabilityList.push_back(poses[(personID * 75) + (partID * 3)] + 2);
+        }
+        imInfo.persons.push_back(newPerson);
+    }
+
+    float maxProb = 0;
+    float targetID = 0;
+    for(int personID = 0; personID < peopleNum; personID++){
+        imInfo.persons[personID]._probabilityList;
+        float sumOfProbability = float(accumulate(imInfo.persons[personID]._probabilityList.begin(), imInfo.persons[personID]._probabilityList.end(), 0.0));
+        if(maxProb < sumOfProbability) {
+            targetID = personID;
+            maxProb = sumOfProbability;
+        }
+    }
+    imInfo.persons[targetID].humanID = 1;
+    target = imInfo.persons[targetID];
+}
+
+void getPosesInImage(op::Array<float>& poses, ImageInfo& imInfo){
+    int peopleNum = poses.getSize()[0];
+    for(int personID = 0; personID < peopleNum; personID++) {
+        OpenPosePerson newPerson;
+        for(int partID = 0; partID < 25; partID++) {
+            cv::Point2f pt(poses[(personID * 75) + (partID * 3)], poses[(personID * 75) + (partID * 3) + 1]);
+            newPerson._body_parts_coord.push_back(pt);
+            newPerson._probabilityList.push_back(poses[(personID * 75) + (partID * 3)] + 2);
+        }
+        imInfo.persons.push_back(newPerson);
+    }
+}
+
+float sumOfDistOfPoints(vector<cv::Point2f> ptList1, vector<cv::Point2f> ptList2){
+//    CV_ASSERT(ptList1.size() == ptList2.size());
+    float sumDist = 0;
+    for(int i = 0; i < ptList1.size(); i++){
+        sumDist += yagi::calc2PointDistance(ptList1[i], ptList2[i]);
+    }
+    sumDist /= ptList1.size();
+    return sumDist;
+}
+
+void tracking(OpenPosePerson& prevPerson, OpenPosePerson& newTarget, ImageInfo& imInfo){
+    vector<OpenPosePerson> personList = imInfo.persons;
+    int peopleNum = personList.size();
+    int trackingID = 0;
+    float minDist = 10000;
+    for(int personID = 0; personID < peopleNum; personID++) {
+        float distOfCoords = sumOfDistOfPoints(personList[personID]._body_parts_coord, prevPerson._body_parts_coord);
+        if(distOfCoords < minDist){
+            minDist = distOfCoords;
+            trackingID = personID;
+        }
+    }
+    personList[trackingID].humanID = 1;
+    newTarget = personList[trackingID];
+}
+
+void  VisualizeTarget(OpenPosePerson &target, cv::Mat& image){
+    for(cv::Point2f pt: target._body_parts_coord){
+        cv::circle(image, pt, 2, cv::Scalar(255,0,0), 2);
+    }
+    cv::imshow("Tracking target", image);
+}
+
+void FootPrint::loadWebCamPram(Camera& cm){
+    cm.loadCameraA(this->_camera_path + _project_name + "/intrinsicParam.txt");
+    if(ESTIMATE_RT)
+        this->estimateCameraPoseWithImage(cm);//カメラ位置姿勢推定
+    else
+        cm.loadCameraRt(this->_camera_path + _project_name + "/cameraRt.txt");
+}
+
+void FootPrint::InitStepMaps(){
+    this->stepMap = cv::imread(_camera_path + _project_name + "/stepMap.jpg");
+    this->trajectoryMap = cv::imread(_camera_path + _project_name + "/trajectoryMap.jpg");
+    cv::imshow("ste", stepMap);
+    cv::waitKey();
+    originalStepMap = stepMap.clone();
+}
+
+void FootPrint::estimateStepWithMultipleCameras() {
+//カメラパラメータの初期化と読み込み
+    this->cameraInfoInit();
+
+//初回のみ行う
+//    this->videoToImage();   //動画から画像への変換
+//    this->detectHumanPose();    //OpenPoseによる検出
+    this->estimateCameraPose();//カメラ位置姿勢推定
+
+//データのロードなど
+    for (int camID = 0; camID < this->CAMERA_NUM; camID++) {
+        string CAM_NAME = "cam" + to_string(camID + this->CAMERA_FIRST_ID);
+        FootPrint::CameraInfo *cm = &this->CameraInfoList[camID];
+        this->loadImages(this->_projects_path + "openPoseData/" + CAM_NAME + "/imagelist.txt",
+                             cm->imageList, this->FINISH_FRAME);
+        this->loadOpenPoseData(this->_projects_path + "openPoseData/" + CAM_NAME + "/human_pose_info.txt",
+                                   cm->imageList, this->FINISH_FRAME);
+        this->trackTargetPerson(cm->imageList);
+        this->projectPoints(*cm);
+    }
+
+//接地位置推定
+    this->estimateStepPositions();
+}
+
+void FootPrint::estimateStepWithWebCam(){
+
+    //カメラパラメータ読み込み
+    Camera cm;
+    loadWebCamPram(cm);
+
+    //俯瞰画像生成
+    if(SHOW_REPROJECT_RESULT)
+        projectPointsForWebCam(cm);
+
+    //動画読み込み
+    //cv::VideoCapture capture("/home/yagi/CLionProjects/prismFootPrint/Data/Projects/test/videos/cam12.MP4");
+
+    cv::Mat frame;
+    cv::VideoCapture capture(0); // USBカメラのオープン
+    capture.set(CV_CAP_PROP_FRAME_WIDTH, 800);
+    capture.set(CV_CAP_PROP_FRAME_HEIGHT, 600);
+
+    //OpenPose
+    op::Wrapper opWrapper{op::ThreadManagerMode::Asynchronous};
+    opWrapper.start();
+    OpenPosePerson prevTarget;
+    OpenPosePerson newTarget;
+
+    int frameID = 0;
+    while (1) {
+        ImageInfo imInfo;
+        imWebCamList.push_back(imInfo);
+        capture.read(frame);
+
+        auto datumProcessed = opWrapper.emplaceAndPop(frame); //OpenPose
+        imInfo.image = datumProcessed->at(0).cvOutputData;
+        cv::imshow("User worker GUI", imInfo.image);
+        int k = cv::waitKey(1);
+
+        op::Array<float> poses =  datumProcessed->at(0).poseKeypoints;
+        if(!poses.getSize().empty()) { //誰か検出されたら
+            if (frameID == 0) {
+                DetectTargetPerson(poses, imInfo, newTarget);
+                InitVoteListWebCam(newTarget, cm);
+                InitStepMaps();
+            } else {
+                getPosesInImage(poses, imInfo);
+                tracking(prevTarget, newTarget, imInfo);
+                vote(&cm, newTarget.getBodyCoord()[21], frameID, 21);
+                vote(&cm, newTarget.getBodyCoord()[24], frameID, 24);
+                VisualizeTarget(newTarget, imInfo.image);
+                renewResultInfoIm(imInfo.image);
+                showResult();
+            }
+
+            //Target可視化
+            prevTarget = newTarget;
+
+            if (k == 27) {
+                capture.release();
+                cv::destroyAllWindows();
+                break;
+            }
+            frameID++;
+        }
+    }
 }
 
 cv::Mat3f FootPrint::generatePointCloudsAsMatrix(const int width, const int dist){
@@ -1585,8 +1830,43 @@ void FootPrint::vote(Camera* cm, cv::Point2f pt, const int imID, const int bdID)
     int xIdx = int(planePt.x / POINT_DIST) + PLANE_WIDTH;
     int yIdx = int(planePt.y / POINT_DIST) + PLANE_WIDTH;
 
-    votingToMap(xIdx, yIdx, imID, bdID);
+    cout << xIdx << " " << yIdx << endl;
+    if((0 < xIdx && xIdx < 2*PLANE_WIDTH) && (0 < yIdx && yIdx < 2*PLANE_WIDTH))
+        votingToMap(xIdx, yIdx, imID, bdID);
 };
+
+void FootPrint::InitVoteListWebCam(OpenPosePerson& targetPerson, Camera cm) {
+    for(int i = 0; i < 2; i++){
+        voteMapList.push_back(cv::Mat::zeros(PLANE_WIDTH * 2, PLANE_WIDTH * 2, CV_8UC(CHANNEL)));
+    }
+    for(int i = 0; i < VISUALIZE_FRAMES; i++) {
+        vector<cv::Point2f> ptList;
+        stepedPointList.push_back(ptList);
+    }
+
+    cv::Point3f pt = estimate3Dcoord(&cm._A, &cm._Rmat, &cm._T, targetPerson.getBodyCoord()[21]);
+    pt.x += (PLANE_WIDTH * POINT_DIST);
+    pt.y += (PLANE_WIDTH * POINT_DIST);
+    prevStep = cv::Point2f(pt.x/10, pt.y/10);
+    pt = estimate3Dcoord(&cm._A, &cm._Rmat, &cm._T, targetPerson.getBodyCoord()[24]);
+    pt.x += (PLANE_WIDTH * POINT_DIST);
+    pt.y += (PLANE_WIDTH * POINT_DIST);
+    prevPrevStep = cv::Point2f(pt.x/10, pt.y/10);
+
+    StepInfo firstStep;
+    firstStep.frame = 0;
+    firstStep.stride = 0;
+    firstStep.speed = 0;
+    firstStep.stepPosition = prevStep;
+    stepInfoList.push_back(firstStep);
+
+    walkingDistance = 0;
+    numOfSteps = 0;
+    prevStepFrame = 0;
+    prevPrevStepFrame = 0;
+    prevCoM = (prevStep + prevPrevStep)/2;
+    originalStepMap = stepMap.clone();
+}
 
 void FootPrint::InitVoteList() {
     for(int i = 0; i < 2; i++){
@@ -1609,8 +1889,7 @@ void FootPrint::InitVoteList() {
             pt.x += (PLANE_WIDTH * POINT_DIST);
             pt.y += (PLANE_WIDTH * POINT_DIST);
             prevPrevStep = cv::Point2f(pt.x/10, pt.y/10);
-//            cout << prevStep << endl;
-//            cout << prevPrevStep << endl;
+
             StepInfo firstStep;
             firstStep.frame = 0;
             firstStep.stride = 0;
@@ -1631,20 +1910,17 @@ void FootPrint::showResult(){
     int imW = PLANE_WIDTH * 2;
     cv::Mat base(imW * 2, imW * 2, CV_8UC3);
     cv::Mat roi1(base, cv::Rect(0 , 0 , imW , imW) );
-    cv::Mat trajDummy;
-    cv::Mat stepDummy;
-    cv::Mat heatDummy;
-    cv::flip(trajectoryMap.t(), trajDummy, 0);
+    cv::Mat trajDummy = trajectoryMap.clone();
+    cv::Mat stepDummy = stepMap.clone();
+    cv::Mat heatDummy = HeatMap.clone();
+//    cv::flip(trajectoryMap.t(), trajDummy, 0);
     trajDummy.copyTo(roi1);
-//    trajectoryMap.copyTo(roi1);
     cv::Mat roi2( base,cv::Rect(imW , 0 , imW , imW) );
-    cv::flip(stepMap.t(), stepDummy, 0);
+//    cv::flip(stepMap.t(), stepDummy, 0);
     stepDummy.copyTo(roi2);
-//    stepMap.copyTo(roi2);
     cv::Mat roi3( base,cv::Rect(0 , imW , imW , imW) );
-    cv::flip(HeatMap.t(), heatDummy, 0);
+//    cv::flip(HeatMap.t(), heatDummy, 0);
     heatDummy.copyTo(roi3);
-//    HeatMap.copyTo(roi3);
     cv::Mat roi4( base,cv::Rect(imW , imW , imW , imW) );
     ResultInfo.copyTo(roi4);
 
@@ -1652,8 +1928,9 @@ void FootPrint::showResult(){
     cv::line(base, cv::Point2f(imW, 0), cv::Point2f(imW, imW*2), cv::Scalar(255,0,0), 2);
 
     cv::namedWindow("Result",CV_WINDOW_AUTOSIZE);
+    cv::resize(stepDummy, stepDummy, cv::Size(), 2,2);
+//    imshow("Step", stepDummy);
     imshow("Result",base);
-    cv::waitKey(0);
 }
 
 void FootPrint::renewResultInfoIm(cv::Mat image){
@@ -1668,8 +1945,8 @@ void FootPrint::renewResultInfoIm(cv::Mat image){
         stepInfoList[numOfSteps].speed = speed;
     }
 
-    int dotpoint1 = to_string(walkingDistance).find(".");
-    int dotpoint2 = to_string(stepInfoList[numOfSteps].speed).find(".");
+    int dotpoint1 = int(to_string(walkingDistance).find("."));
+    int dotpoint2 = int(to_string(stepInfoList[numOfSteps].speed).find("."));
 //    cv::putText(im.image, to_string(shoulderDegreeA).substr(0, dotpoint1 + 2), coords[2], 0, fontsize, cv::Scalar(0,0,0), 1, CV_AA);
 
     cv::putText(tmpResultIm, "Walking Distance:" + to_string(walkingDistance).substr(0, dotpoint1 + 2) + "cm", cv::Point2f(10, image.rows + 40),  cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(255,255,255), 1);
@@ -1811,7 +2088,7 @@ void FootPrint::reconstruct3Dpose(){
                 cout << endl;
 
                 if (usablePmatList.size() >= 3) {
-                    cv::sfm::triangulatePoints(imagePoints, projectionMatrixList, points);
+//                    cv::sfm::triangulatePoints(imagePoints, projectionMatrixList, points);
                     cout << "3Dpt " << points << endl;
 
                     cv::Vec3d pt(points.at<double>(0, 0), points.at<double>(1, 0), points.at<double>(2, 0));
@@ -2084,6 +2361,70 @@ void FootPrint::estimateGroundPlane(cv::Mat points){
     //平面点群を出力
 
 }
+
+void FootPrint::projectPointsForWebCam(Camera &cm){
+
+    cv::Mat im;
+    cv::VideoCapture capture(0); // USBカメラのオープン
+    capture.set(CV_CAP_PROP_FRAME_WIDTH, 800);
+    capture.set(CV_CAP_PROP_FRAME_HEIGHT, 600);
+    while(1){
+        capture >> im;
+        cv::imshow("checker board", im);
+        int k = cv::waitKey(1);
+        if(k == 115){
+            capture.release();
+            break;
+        }
+    }
+
+    cv::Mat pts;
+    vector<cv::Point2f> projectPts;
+    cv::Mat2f projectPtsMat;
+    cv::projectPoints(this->model.vertices, cv::Mat(cm._Rvec), cv::Mat(cm._Tvec), cm._A,
+                      cm._dist, projectPts);
+
+    //projPointsをMat_に格納
+    for(int i = 0; i < this->PLANE_WIDTH; i++){
+        for(int j = 0; j < this->PLANE_WIDTH; j++){
+            projectPtsMat(cv::Point(j, i) = projectPts[i*this->PLANE_WIDTH + j]);
+        }
+    }
+
+    cv::Mat dummy = im.clone();
+    if(SHOW_REPROJECT_RESULT) {
+        int ptID = 0;
+        for (cv::Point2f pt : projectPts) {
+            cv::circle(dummy, pt, 2, cv::Scalar(0, 255, 0), 2);
+        }
+        cv::imshow("projected points", dummy);
+        cv::waitKey();
+    }
+
+    //ワーピングのための4点
+    vector<cv::Point2f> projPtList;
+    projPtList.push_back(projectPts[((PLANE_WIDTH * 2)) - 1]);
+    projPtList.push_back(projectPts[0]);
+    projPtList.push_back(projectPts[(PLANE_WIDTH * 2) * (PLANE_WIDTH * 2) - (PLANE_WIDTH * 2)]);
+    projPtList.push_back(projectPts[(PLANE_WIDTH * 2 * PLANE_WIDTH * 2) - 1]);
+
+
+    vector<cv::Point2f> planePtList;
+    planePtList.push_back(cv::Point2f(0, 0));
+    planePtList.push_back(cv::Point2f(PLANE_WIDTH * 2, 0));
+    planePtList.push_back(cv::Point2f(PLANE_WIDTH * 2, PLANE_WIDTH * 2));
+    planePtList.push_back(cv::Point2f(0, PLANE_WIDTH * 2));
+
+    cv::Mat H = cv::findHomography(planePtList, projPtList);
+
+    cv::Mat warped;
+    cv::warpPerspective(im, warped, H.inv(), stepMap.size());
+    cv::imshow("warped", warped);
+    cv::waitKey();
+    cv::imwrite(_camera_path + _project_name + "/stepMap.jpg", warped);
+    cv::imwrite(_camera_path + _project_name + "/trajectoryMap.jpg", warped);
+}
+
 
 void FootPrint::projectPoints(CameraInfo &cam){
     cv::Mat pts;

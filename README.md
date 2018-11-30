@@ -18,3 +18,10 @@
     - HeatMap 完成
     - 長時間撮影
     - 行動認識 
+    
+##### 11/29
+- TODO
+    - WebCamMode実装
+        - WebCamCalibration
+        - Re-Identification
+        - 歩行予測

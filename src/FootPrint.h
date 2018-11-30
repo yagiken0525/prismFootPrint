@@ -75,6 +75,7 @@ public:
     std::vector<FootPrint::CameraInfo> CameraInfoList;
 
     //しきい値
+    OpenPosePerson prevTargetPerson;
     float DIST_RANGE; // 画像投影点の内どれくらいの距離の点を接地点とみなすか
     int VOTE_RANGE; // 何投票されたら接地点とみなすか
     int MIN_STRIDE;
@@ -97,10 +98,15 @@ public:
     bool SHOW_REPROJECT_RESULT;
     bool CHECKER_BOARD_CALIBRATION;
     int FLOOR_WIDTH;
-    int PLANE_WIDTH = 500;
+    int PLANE_WIDTH = 200;
     int POINT_DIST = 10;
     bool SHOW_TRAJECTORY;
     bool PLOT_ON_WARPED_IMAGE;
+    bool USE_WEBCAM;
+    bool ESTIMATE_RT;
+
+    std::vector<ImageInfo> imWebCamList;
+    Camera webCam;
 
 
     std::string _project_name;
@@ -111,9 +117,13 @@ public:
     std::string _camera_path;
     std::string _sfm_projects_path;
 
+    void estimateStepWithMultipleCameras();
+    void InitStepMaps();
+    void estimateCameraPoseWithImage(Camera& cm);
     void renewResultInfoIm(cv::Mat im);
     void showResult();
     void InitVoteList();
+    void InitVoteListWebCam(OpenPosePerson& ps, Camera cm);
     void vote(Camera* cm, cv::Point2f pt, const int imID, const int bdID);
     void votingToMap(const int x, const int y, const int imID, const int bdID);
     void estimateStepPositions();
@@ -133,6 +143,7 @@ public:
     void generatePlaneModel();
     void estimateCameraPose();
     void projectPoints(CameraInfo& cm);
+    void projectPointsForWebCam(Camera &cm);
     void separateBlocks();
     void setImageResizehomography();
     int loadImages(std::string file_name, std::vector<ImageInfo>& imageInfoList, int lim = 1000);
@@ -151,6 +162,8 @@ public:
     void votedFrameInit();
     void calculateSteppedFrame(int i);
     void reconstruct3Dpose();
+    void estimateStepWithWebCam();
+    void loadWebCamPram(Camera& cm);
     void estimateGroundPlane(cv::Mat points);
 //    void estimateStepPositions();
     void outputTargetPersonInfo(CameraInfo &cam);
