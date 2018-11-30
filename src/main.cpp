@@ -25,9 +25,9 @@ int main() {
     FootPrint footPrint("webCam_oishi");
     footPrint.USE_WEBCAM = true; // webカメラ使うか
     footPrint.STEP_THRESHOLD = 10; // 接地判定のための投票数しきい値
-    footPrint.VOTE_RANGE = 30; // 近接何ピクセルまで投票するか(px)
+    footPrint.VOTE_RANGE = 10; // 近接何ピクセルまで投票するか(px)
     footPrint.MIN_STRIDE = 25; // 一歩とカウントする際の最小歩幅(cm)
-    footPrint.VISUALIZE_FRAMES = 100; // 近傍何フレーム分の接地点を表示するか
+    footPrint.VISUALIZE_FRAMES = 50; // 近傍何フレーム分の接地点を表示するか
     footPrint.CAMERA_NUM = 1; // 接地カメラ個数
     footPrint.CAMERA_FIRST_ID = 12; // 接地カメラの最小ID
     footPrint.FINISH_FRAME = 600; //何フレームまで実行するか

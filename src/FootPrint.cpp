@@ -518,10 +518,9 @@ void FootPrint::votingToMap(const int x, const int y, const int imID, const int 
         }
     }
 
-    stepedPointList[stepedListPointer] = stepedPoints;
+//    stepedPointList[stepedListPointer] = stepedPoints;
     prevProjectedPt = projectedPt;
-//    cv::imshow("dummy", trajectoryMapDummy);
-//    cv::waitKey();
+
 }
 
 void FootPrint::voting() {
@@ -1458,7 +1457,7 @@ void FootPrint::generatePlaneModel(){
     reconstructedModel.savePly(this->_projects_path + "/planePoints.ply");
 }
 
-void  DetectTargetPerson(op::Array<float>& poses, ImageInfo& imInfo, OpenPosePerson& target){
+void  DetectTargetPerson(op::Array<float>& poses, vector<OpenPosePerson>& personList, OpenPosePerson& target){
     int peopleNum = poses.getSize()[0];
     for(int personID = 0; personID < peopleNum; personID++) {
         OpenPosePerson newPerson;
@@ -1467,24 +1466,24 @@ void  DetectTargetPerson(op::Array<float>& poses, ImageInfo& imInfo, OpenPosePer
             newPerson._body_parts_coord.push_back(pt);
             newPerson._probabilityList.push_back(poses[(personID * 75) + (partID * 3)] + 2);
         }
-        imInfo.persons.push_back(newPerson);
+        personList.push_back(newPerson);
     }
 
     float maxProb = 0;
     float targetID = 0;
     for(int personID = 0; personID < peopleNum; personID++){
-        imInfo.persons[personID]._probabilityList;
-        float sumOfProbability = float(accumulate(imInfo.persons[personID]._probabilityList.begin(), imInfo.persons[personID]._probabilityList.end(), 0.0));
+        personList[personID]._probabilityList;
+        float sumOfProbability = float(accumulate(personList[personID]._probabilityList.begin(), personList[personID]._probabilityList.end(), 0.0));
         if(maxProb < sumOfProbability) {
             targetID = personID;
             maxProb = sumOfProbability;
         }
     }
-    imInfo.persons[targetID].humanID = 1;
-    target = imInfo.persons[targetID];
+    personList[targetID].humanID = 1;
+    target = personList[targetID];
 }
 
-void getPosesInImage(op::Array<float>& poses, ImageInfo& imInfo){
+void getPosesInImage(op::Array<float>& poses, vector<OpenPosePerson>& personList){
     int peopleNum = poses.getSize()[0];
     for(int personID = 0; personID < peopleNum; personID++) {
         OpenPosePerson newPerson;
@@ -1493,7 +1492,7 @@ void getPosesInImage(op::Array<float>& poses, ImageInfo& imInfo){
             newPerson._body_parts_coord.push_back(pt);
             newPerson._probabilityList.push_back(poses[(personID * 75) + (partID * 3)] + 2);
         }
-        imInfo.persons.push_back(newPerson);
+        personList.push_back(newPerson);
     }
 }
 
@@ -1507,8 +1506,7 @@ float sumOfDistOfPoints(vector<cv::Point2f> ptList1, vector<cv::Point2f> ptList2
     return sumDist;
 }
 
-void tracking(OpenPosePerson& prevPerson, OpenPosePerson& newTarget, ImageInfo& imInfo){
-    vector<OpenPosePerson> personList = imInfo.persons;
+void tracking(OpenPosePerson& prevPerson, OpenPosePerson& newTarget, vector<OpenPosePerson>& personList){
     int peopleNum = personList.size();
     int trackingID = 0;
     float minDist = 10000;
@@ -1528,6 +1526,7 @@ void  VisualizeTarget(OpenPosePerson &target, cv::Mat& image){
         cv::circle(image, pt, 2, cv::Scalar(255,0,0), 2);
     }
     cv::imshow("Tracking target", image);
+    cv::waitKey(1);
 }
 
 void FootPrint::loadWebCamPram(Camera& cm){
@@ -1541,8 +1540,8 @@ void FootPrint::loadWebCamPram(Camera& cm){
 void FootPrint::InitStepMaps(){
     this->stepMap = cv::imread(_camera_path + _project_name + "/stepMap.jpg");
     this->trajectoryMap = cv::imread(_camera_path + _project_name + "/trajectoryMap.jpg");
-    cv::imshow("ste", stepMap);
-    cv::waitKey();
+//    cv::imshow("ste", stepMap);
+//    cv::waitKey();
     originalStepMap = stepMap.clone();
 }
 
@@ -1582,7 +1581,7 @@ void FootPrint::estimateStepWithWebCam(){
         projectPointsForWebCam(cm);
 
     //動画読み込み
-    //cv::VideoCapture capture("/home/yagi/CLionProjects/prismFootPrint/Data/Projects/test/videos/cam12.MP4");
+//    cv::VideoCapture capture("/home/yagi/CLionProjects/prismFootPrint/Data/Camera/webCam_oishi/webCam_oishi20181130.webm");
 
     cv::Mat frame;
     cv::VideoCapture capture(0); // USBカメラのオープン
@@ -1592,38 +1591,38 @@ void FootPrint::estimateStepWithWebCam(){
     //OpenPose
     op::Wrapper opWrapper{op::ThreadManagerMode::Asynchronous};
     opWrapper.start();
+    vector<OpenPosePerson> personList;
     OpenPosePerson prevTarget;
     OpenPosePerson newTarget;
 
     int frameID = 0;
     while (1) {
-        ImageInfo imInfo;
-        imWebCamList.push_back(imInfo);
+//        ImageInfo imInfo;
+//        imWebCamList.push_back(imInfo);
         capture.read(frame);
-
         auto datumProcessed = opWrapper.emplaceAndPop(frame); //OpenPose
-        imInfo.image = datumProcessed->at(0).cvOutputData;
-        cv::imshow("User worker GUI", imInfo.image);
+        frame = datumProcessed->at(0).cvOutputData;
+        cv::imshow("User worker GUI", frame);
         int k = cv::waitKey(1);
 
         op::Array<float> poses =  datumProcessed->at(0).poseKeypoints;
         if(!poses.getSize().empty()) { //誰か検出されたら
             if (frameID == 0) {
-                DetectTargetPerson(poses, imInfo, newTarget);
+                DetectTargetPerson(poses, personList, newTarget);
                 InitVoteListWebCam(newTarget, cm);
                 InitStepMaps();
             } else {
-                getPosesInImage(poses, imInfo);
-                tracking(prevTarget, newTarget, imInfo);
+                getPosesInImage(poses, personList);
+                tracking(prevTarget, newTarget, personList);
                 vote(&cm, newTarget.getBodyCoord()[21], frameID, 21);
                 vote(&cm, newTarget.getBodyCoord()[24], frameID, 24);
-                VisualizeTarget(newTarget, imInfo.image);
-                renewResultInfoIm(imInfo.image);
+                VisualizeTarget(newTarget, frame);
+                renewResultInfoIm(frame);
                 showResult();
             }
 
-            //Target可視化
             prevTarget = newTarget;
+            personList.clear();
 
             if (k == 27) {
                 capture.release();
@@ -1830,7 +1829,12 @@ void FootPrint::vote(Camera* cm, cv::Point2f pt, const int imID, const int bdID)
     int xIdx = int(planePt.x / POINT_DIST) + PLANE_WIDTH;
     int yIdx = int(planePt.y / POINT_DIST) + PLANE_WIDTH;
 
-    cout << xIdx << " " << yIdx << endl;
+    //座標系変換
+    int tmp = xIdx;
+    xIdx = PLANE_WIDTH*2 - yIdx;
+    yIdx = tmp;
+
+//    cout << xIdx << " " << yIdx << endl;
     if((0 < xIdx && xIdx < 2*PLANE_WIDTH) && (0 < yIdx && yIdx < 2*PLANE_WIDTH))
         votingToMap(xIdx, yIdx, imID, bdID);
 };
