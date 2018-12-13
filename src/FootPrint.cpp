@@ -1581,10 +1581,10 @@ void FootPrint::estimateStepWithWebCam(){
         projectPointsForWebCam(cm);
 
     //動画読み込み
-//    cv::VideoCapture capture("/home/yagi/CLionProjects/prismFootPrint/Data/Camera/webCam_oishi/webCam_oishi20181130.webm");
+    cv::VideoCapture capture("/home/yagi/CLionProjects/prismFootPrint/Data/Camera/webCam_oishi/webCam_oishi20181130.webm");
 
     cv::Mat frame;
-    cv::VideoCapture capture(0); // USBカメラのオープン
+//    cv::VideoCapture capture(0); // USBカメラのオープン
     capture.set(CV_CAP_PROP_FRAME_WIDTH, 800);
     capture.set(CV_CAP_PROP_FRAME_HEIGHT, 600);
 
@@ -1953,9 +1953,11 @@ void FootPrint::renewResultInfoIm(cv::Mat image){
     int dotpoint2 = int(to_string(stepInfoList[numOfSteps].speed).find("."));
 //    cv::putText(im.image, to_string(shoulderDegreeA).substr(0, dotpoint1 + 2), coords[2], 0, fontsize, cv::Scalar(0,0,0), 1, CV_AA);
 
-    cv::putText(tmpResultIm, "Walking Distance:" + to_string(walkingDistance).substr(0, dotpoint1 + 2) + "cm", cv::Point2f(10, image.rows + 40),  cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(255,255,255), 1);
-    cv::putText(tmpResultIm, "Walking Speed:" + to_string(stepInfoList[numOfSteps].speed).substr(0, dotpoint2 + 2) + "cm/sec", cv::Point2f(10, image.rows + 80),  cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(255,255,255), 1);
-    cv::putText(tmpResultIm, "Number of Steps:" + to_string(numOfSteps), cv::Point2f(10, image.rows + 120),  cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(255,255,255), 1);
+    float stringSize = 0.4;
+    float lineSpace = 20;
+    cv::putText(tmpResultIm, "Walking Distance:" + to_string(walkingDistance).substr(0, dotpoint1 + 2) + "cm", cv::Point2f(10, image.rows + lineSpace),  cv::FONT_HERSHEY_SIMPLEX, stringSize, cv::Scalar(255,255,255), 1);
+    cv::putText(tmpResultIm, "Walking Speed:" + to_string(stepInfoList[numOfSteps].speed).substr(0, dotpoint2 + 2) + "cm/sec", cv::Point2f(10, image.rows + (2*lineSpace)),  cv::FONT_HERSHEY_SIMPLEX, stringSize, cv::Scalar(255,255,255), 1);
+    cv::putText(tmpResultIm, "Number of Steps:" + to_string(numOfSteps), cv::Point2f(10, image.rows + (3*lineSpace)),  cv::FONT_HERSHEY_SIMPLEX, stringSize, cv::Scalar(255,255,255), 1);
 
     ResultInfo = tmpResultIm;
 
