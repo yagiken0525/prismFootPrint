@@ -13,6 +13,7 @@
 #include <vector>
 
 #define CHANNEL 15
+#define PI 3.14
 
 struct Vote{
     cv::Vec3f vertice;
@@ -75,6 +76,9 @@ public:
     std::vector<FootPrint::CameraInfo> CameraInfoList;
 
     //しきい値
+    cv::Mat leftFootIm;
+    cv::Mat rightFootIm;
+    cv::Point2f footImCenter;
     OpenPosePerson prevTargetPerson;
     float DIST_RANGE; // 画像投影点の内どれくらいの距離の点を接地点とみなすか
     int VOTE_RANGE; // 何投票されたら接地点とみなすか
@@ -104,6 +108,8 @@ public:
     bool PLOT_ON_WARPED_IMAGE;
     bool USE_WEBCAM;
     bool ESTIMATE_RT;
+    cv::Vec3b RIGHT_FOOT_COLOR;
+    cv::Vec3b LEFT_FOOT_COLOR;
 
     std::vector<ImageInfo> imWebCamList;
     Camera webCam;
@@ -117,6 +123,15 @@ public:
     std::string _camera_path;
     std::string _sfm_projects_path;
 
+    void cropStepMap();
+    void showAxis(Camera & cm);
+    void loadFootImages();
+    void renewStepCoM(const int bdID, cv::Point2f pt);
+    void initVoteChannel(const int dstChannel, cv::Mat *voteMap);
+    void deletePrevSteps();
+    void addNewStep(cv::Point2f stepPt, const int i);
+    void visualizeFootPrint();
+    void estimateStepAngle(Camera& cm, OpenPosePerson& newTarget, const int frameID);
     void estimateStepWithMultipleCameras();
     void InitStepMaps();
     void estimateCameraPoseWithImage(Camera& cm);
@@ -198,8 +213,19 @@ public:
 
     std::vector<int> right_vote;
     std::vector<int> left_vote;
+    struct Foot{
+        cv::Point2f toe1;
+        cv::Point2f toe2;
+        cv::Point2f ankle;
+    };
+    Foot rightFoot;
+    Foot leftFoot;
     std::vector<std::pair<cv::Point2f, int>> clickLegPoints;
     std::vector<cv::Point3f> objectCorners;
+    std::vector<bool> rightStepFlag;
+    std::vector<bool> leftStepFlag;
+
+    double calcAngle(Foot& rightFoot, std::string str);
 
     cv::Scalar color;
     std::vector<std::pair<int, float>> RstepFrame;

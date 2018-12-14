@@ -25,3 +25,16 @@
         - WebCamCalibration
         - Re-Identification
         - 歩行予測
+        
+##### 12/14
+gait & posture idea
+- 様々なシーン
+    - 廊下で不特定多数の人
+    - cornerで計測
+    - 対象人物のトラッキング(一度画面外に出てもok)
+    - 坂道
+- 出力
+    - 俯瞰した足あと
+    - HeatMap
+- 精度
+    - optiTrackとの比較実験

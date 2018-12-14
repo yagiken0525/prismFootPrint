@@ -25,7 +25,7 @@ int main() {
     FootPrint footPrint("webCam_oishi");
     footPrint.USE_WEBCAM = true; // webカメラ使うか
     footPrint.STEP_THRESHOLD = 10; // 接地判定のための投票数しきい値
-    footPrint.VOTE_RANGE = 10; // 近接何ピクセルまで投票するか(px)
+    footPrint.VOTE_RANGE = 5; // 近接何ピクセルまで投票するか(px)
     footPrint.MIN_STRIDE = 25; // 一歩とカウントする際の最小歩幅(cm)
     footPrint.VISUALIZE_FRAMES = 50; // 近傍何フレーム分の接地点を表示するか
     footPrint.CAMERA_NUM = 1; // 接地カメラ個数
@@ -39,10 +39,11 @@ int main() {
     footPrint.PLANE_WIDTH = 150; // 点群領域1辺の1/2
     footPrint.POINT_DIST = 10; // 点群の領域分割幅(mm)
     footPrint.SHOW_TRAJECTORY = true; // trajectory表示
-    footPrint.PLOT_ON_WARPED_IMAGE = true; // 床画像に足あと投影
+//    footPrint.PLOT_ON_WARPED_IMAGE = true; // 床画像に足あと投影
     footPrint.ESTIMATE_RT = false; // Rt求めるか
     footPrint.SHOW_REPROJECT_RESULT = false; // 点群の再投影結果を表示するか
-
+    footPrint.RIGHT_FOOT_COLOR = cv::Vec3b(0,255,0);
+    footPrint.LEFT_FOOT_COLOR = cv::Vec3b(255,0,0);
 
     footPrint.trajectoryMap = cv::Mat::ones(footPrint.PLANE_WIDTH * 2, footPrint.PLANE_WIDTH * 2, CV_8UC3);
     footPrint.stepMap = cv::Mat::ones(footPrint.PLANE_WIDTH * 2, footPrint.PLANE_WIDTH * 2, CV_8UC3);
@@ -51,6 +52,7 @@ int main() {
     footPrint.ResultInfo = cv::Mat::ones(footPrint.PLANE_WIDTH * 2, footPrint.PLANE_WIDTH * 2, CV_8UC3);
 
     cv::Mat3f plane = footPrint.generatePointCloudsAsMatrix(footPrint.PLANE_WIDTH, footPrint.POINT_DIST);  //床平面の点群生成
+    footPrint.loadFootImages();
 
     if(footPrint.USE_WEBCAM) {
         footPrint.estimateStepWithWebCam();
