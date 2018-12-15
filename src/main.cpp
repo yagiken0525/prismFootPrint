@@ -7,24 +7,27 @@ using namespace cv;
 
 
 int main() {
-    FootPrint footPrint("badminton");
+    FootPrint footPrint("lab1127");
+    footPrint.VIDEO_TYPE = ".MP4"; // 動画拡張子
+
     footPrint.USE_WEBCAM = false; // webカメラ使うか
     footPrint.USE_HOMOGRAPHY = true; // webカメラ使うか
-    footPrint.RESULT_SCALE = 0.5; // 接地判定のための投票数しきい値
-
-    footPrint.STEP_THRESHOLD = 3; // 接地判定のための投票数しきい値
+    footPrint.RESULT_SCALE = 0.1; // 接地判定のための投票数しきい値
+    footPrint.SHOW_IMAGE_PATH = "../Data/Images/bearFoot/";
+    footPrint.STEP_THRESHOLD = 5; // 接地判定のための投票数しきい値
     footPrint.VOTE_RANGE = 5; // 近接何ピクセルまで投票するか(px)
     footPrint.MIN_STRIDE = 25; // 一歩とカウントする際の最小歩幅(cm)
     footPrint.VISUALIZE_FRAMES = 50; // 近傍何フレーム分の接地点を表示するか
     footPrint.CAMERA_NUM = 1; // 接地カメラ個数
     footPrint.CAMERA_FIRST_ID = 12; // 接地カメラの最小ID
     footPrint.FINISH_FRAME = 600; //何フレームまで実行するか
-    footPrint.VIDEO_TYPE = ".mp4"; // 動画拡張子
     footPrint.VIDEO_FPS = 30; // 動画fps
     footPrint.SELECT_TRACKER_BY_CLICKING = false; // tracking対象を手動で指定するか
     footPrint.SHOW_TRACKING_RESULT = false; // tracking結果を表示するか
     footPrint.CHECKER_BOARD_CALIBRATION = true; // チェッカーボードでキャリブレーション行うか
     footPrint.PLANE_WIDTH = 150; // 点群領域1辺の1/2
+//    footPrint.AREA_W = 1.5; // 点群領域1辺の1/2
+//    footPrint.AREA_H = 1.5; // 点群領域1辺の1/2
     footPrint.POINT_DIST = 10; // 点群の領域分割幅(mm)
     footPrint.SHOW_TRAJECTORY = true; // trajectory表示
     footPrint.TARGET_AREA_WIDTH = 1.5; // 可視化領域の横幅(m)

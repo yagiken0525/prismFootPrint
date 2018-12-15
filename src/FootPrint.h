@@ -85,6 +85,7 @@ public:
     float DIST_RANGE; // 画像投影点の内どれくらいの距離の点を接地点とみなすか
     float RESULT_SCALE; // 画像投影点の内どれくらいの距離の点を接地点とみなすか
     int VOTE_RANGE; // 何投票されたら接地点とみなすか
+    std::string SHOW_IMAGE_PATH; // 何投票されたら接地点とみなすか
     int MIN_STRIDE;
     int VISUALIZE_FRAMES;
     int STEP_THRESHOLD; // 何投票されたら接地点とみなすか
@@ -133,10 +134,12 @@ public:
     std::string _camera_path;
     std::string _sfm_projects_path;
 
+    std::vector<bool> getFootFlag(const int id);
     void voteForHomography(OpenPosePerson target, const int imID);
+    void stepFlagInit();
     void selectImagePoints(std::vector<cv::Point2f> & clickedPoints);
     void selectWorldPoints(std::vector<cv::Point2f> & clickedPoints);
-    void adjustScaleUsingHomograsphy();
+    void adjustScaleUsingHomography();
     void estimateStepUsingHomography();
     void getBackGroundImage();
     void cropStepMap();
@@ -146,11 +149,11 @@ public:
     void renewStepFlag(const int bdID, cv::Point2f pt);
     void initVoteChannel(const int dstChannel, cv::Mat *voteMap);
     void deletePrevSteps();
-    void addNewStep(cv::Point2f stepPt, const int i);
+    void addNewStep(cv::Point2f stepPt, const int i, const int bdID);
     void visualizeFootPrint();
     void estimateStepAngle(Camera& cm, OpenPosePerson& newTarget, const int frameID);
     void estimateStepWithMultipleCameras();
-    void InitStepMaps();
+    void InitStepMaps(OpenPosePerson target);
     void estimateCameraPoseWithImage(Camera& cm);
     void renewResultInfoIm(cv::Mat im);
     void showResult();
@@ -225,9 +228,13 @@ public:
     cv::Point3f imagePointTo3dPoint(cv::Point2f point);
     cv::Point2f worldPointToImagePoint(cv::Point3f point, Camera* camera);
     std::vector<int> findFootPrintAreaIn3D(cv::Point2f point, Camera camera);
+    std::vector<cv::Point2f> rightAffinePoints;
+    std::vector<cv::Point2f> leftAffinePoints;
     std::set<int> findFootPrintAreaIn3DSet(cv::Point2f point, Camera* camera, cv::Mat image);
     cv::Mat imageResizeH;
     ModelInfo model;
+    bool stepped = false;
+    int laststepID;
 
     int imageWidth = 1920;
     int imageHeight = 1080;
@@ -246,7 +253,7 @@ public:
     std::vector<bool> rightStepFlag;
     std::vector<bool> leftStepFlag;
 
-    double calcAngle(Foot& rightFoot, std::string str);
+    double calcAngle(const int ID);
 
     cv::Scalar color;
     std::vector<std::pair<int, float>> RstepFrame;

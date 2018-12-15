@@ -93,6 +93,15 @@ void yagi::generatePointClouds(std::vector<cv::Point3f>& objectCorners, int H, i
     }
 };
 
+
+void yagi::generatePointCloudsIn2Dscale(std::vector<cv::Point2f>& objectCorners, int H, int W, float SCALE, const int AREA_W, const int AREA_H){
+    for (int i = 0; i < H; i++) {
+        for (int j = 0; j < W; j++) {
+            objectCorners.push_back(cv::Point2f((j * SCALE) + AREA_W, (i * SCALE) + AREA_H));
+        }
+    }
+};
+
 void yagi::generatePointCloudsAsBlocks(std::vector<cv::Point3f>& objectCorners, int H, int W, float SCALE, int Wstart, int Hstart, int blockCols, int blockRows) {
     int Hrange = H - Hstart;
     int Wrange = W - Wstart;

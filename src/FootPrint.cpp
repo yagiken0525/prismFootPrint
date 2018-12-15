@@ -28,6 +28,16 @@ void FootPrint::loadAllCameraParam() {
 //    loadProjectionMatrix();
 }
 
+bool ifStepped(vector<bool>vec){
+    int numOfTrue = 0;
+    for(bool tmp : vec){
+        if(tmp)
+            numOfTrue++;
+    }
+    return (numOfTrue == 3);
+}
+
+
 void FootPrint::cameraInfoInit(){
     for (int i = 0; i < this->CAMERA_NUM; i++){
         CameraInfo camIn;
@@ -444,26 +454,29 @@ cv::Vec3b getPointColor(const int bdID){
         case 19:
             return cv::Vec3b(255,0,0);
         case 20:
-            return cv::Vec3b(128,0,0);
-        case 21:
-            return cv::Vec3b(200,0,0);
-        case 22:
             return cv::Vec3b(0,255,0);
+        case 21:
+            return cv::Vec3b(0,0,255);
+        case 22:
+            return cv::Vec3b(255,0,0);
         case 23:
-            return cv::Vec3b(0,200,0);
+            return cv::Vec3b(0,255,0);
         case 24:
-            return cv::Vec3b(0,128,0);
+            return cv::Vec3b(0,0,255);
         default:
             return cv::Vec3b(0,0,0);
     }
 }
 
-void FootPrint::addNewStep(cv::Point2f stepPt, const int imID){
+void FootPrint::addNewStep(cv::Point2f stepPt, const int imID, const int bdID){
     float distToPrevStep = yagi::calc2PointDistance(prevStep, stepPt);
     float distToPrevPrevStep = yagi::calc2PointDistance(prevPrevStep, stepPt);
+
+    //前の接地点との距離がしきい値超えていれば
     if((distToPrevStep > MIN_STRIDE) && (distToPrevPrevStep > MIN_STRIDE)){
         StepInfo newStep;
-//                    cv::line(trajectoryMap, prevStep, stepPt, cv::Scalar(0, 0, 255), 1);
+
+        // cv::line(trajectoryMap, prevStep, stepPt, cv::Scalar(0, 0, 255), 1);
         prevPrevStep = prevStep;
         prevStep = stepPt;
         walkingDistance += distToPrevStep;
@@ -473,6 +486,9 @@ void FootPrint::addNewStep(cv::Point2f stepPt, const int imID){
         newStep.frame = imID;
         newStep.stride = distToPrevStep;
         this->stepInfoList.push_back(newStep);
+
+        stepped = true;
+        laststepID = bdID;
     }
 }
 
@@ -502,32 +518,32 @@ void FootPrint::deletePrevSteps(){
 void FootPrint::renewStepFlag(const int bdID, cv::Point2f pt){
     switch(bdID){
         case 19:
-//            leftStepFlag.push_back(true);
-//            leftFoot.toe1 = pt;
+            leftStepFlag[0] = true;
+            leftFoot.toe1 = pt;
             break;
 
         case 20:
-            leftStepFlag.push_back(true);
+            leftStepFlag[1] = true;
             leftFoot.toe2 = pt;
             break;
 
         case 21:
-            leftStepFlag.push_back(true);
+            leftStepFlag[2] = true;
             leftFoot.ankle = pt;
             break;
 
         case 22:
-//            rightStepFlag.push_back(true);
-//            rightFoot.toe1 = pt;
+            rightStepFlag[0] = true;
+            rightFoot.toe1 = pt;
             break;
 
         case 23:
-            rightStepFlag.push_back(true);
+            rightStepFlag[1] = true;
             rightFoot.toe2 = pt;
             break;
 
         case 24:
-            rightStepFlag.push_back(true);
+            rightStepFlag[2] = true;
             rightFoot.ankle = pt;
             break;
 
@@ -557,7 +573,7 @@ void FootPrint::votingToMap(const int x, const int y, const int imID, const int 
                 trajectoryMap.at<cv::Vec3b>(stepPt) = color;
                 stepMap.at<cv::Vec3b>(stepPt) = color;
                 stepedPoints.push_back(stepPt);
-                addNewStep(stepPt, imID);
+//                addNewStep(stepPt, imID);
 
                 if(xIdx == x && yIdx == y){
                     renewStepFlag(bdID, cv::Point2f(x,y));
@@ -1608,11 +1624,26 @@ void tracking(OpenPosePerson& prevPerson, OpenPosePerson& newTarget, vector<Open
 
 void  VisualizeTarget(OpenPosePerson &target, cv::Mat& image){
     for(cv::Point2f pt: target._body_parts_coord){
-        cv::circle(image, pt, 2, cv::Scalar(0,0,255), 2);
+        cv::circle(image, pt, 10, cv::Scalar(0,0,255), -1);
     }
-    cv::imshow("Tracking target", image);
-    cv::waitKey(1);
+//    cv::imshow("Tracking target", image);
+//    cv::waitKey(1);
 }
+
+void FootPrint::stepFlagInit() {
+    for(int i = 0; i < 3; i++) {
+        rightStepFlag.push_back(false);
+        leftStepFlag.push_back(false);
+    }
+    rightFoot.ankle = cv::Point2f(0.0);
+    rightFoot.toe1 = cv::Point2f(0.0);
+    rightFoot.toe2 = cv::Point2f(0.0);
+    leftFoot.ankle = cv::Point2f(0.0);
+    leftFoot.toe1 = cv::Point2f(0.0);
+    leftFoot.toe2 = cv::Point2f(0.0);
+}
+
+
 
 void FootPrint::loadWebCamPram(Camera& cm){
     cm.loadCameraA(this->_camera_path + _project_name + "/intrinsicParam.txt");
@@ -1622,7 +1653,7 @@ void FootPrint::loadWebCamPram(Camera& cm){
         cm.loadCameraRt(this->_camera_path + _project_name + "/cameraRt.txt");
 }
 
-void FootPrint::InitStepMaps(){
+void FootPrint::InitStepMaps(OpenPosePerson targetPerson){
 //    cropStepMap();
     if(USE_HOMOGRAPHY){
         //この6は足関節の数
@@ -1641,6 +1672,45 @@ void FootPrint::InitStepMaps(){
         this->trajectoryMap = cv::imread(_camera_path + _project_name + "/trajectoryMap.jpg");
     }
     originalStepMap = stepMap.clone();
+
+    if(USE_HOMOGRAPHY){
+        //この6は足関節の数
+        for(int i = 0; i < 6; i++){
+            voteMapList.push_back(cv::Mat::zeros(overViewImage.size(), CV_8UC(CHANNEL)));
+        }
+        stepMap = cv::Mat::zeros(overViewImage.size(), CV_8UC3);
+        trajectoryMap = overViewImage.clone();
+
+        for(int i = 0; i < VISUALIZE_FRAMES; i++) {
+            vector<cv::Point2f> ptList;
+            stepedPointList.push_back(ptList);
+        }
+    }else{
+        this->stepMap = cv::imread(_camera_path + _project_name + "/stepMap.jpg");
+        this->trajectoryMap = cv::imread(_camera_path + _project_name + "/trajectoryMap.jpg");
+    }
+    originalStepMap = stepMap.clone();
+
+    prevStep = warpPoint(targetPerson.getBodyCoord()[21], warpH);
+    prevPrevStep = warpPoint(targetPerson.getBodyCoord()[24], warpH);
+
+    StepInfo firstStep;
+    firstStep.frame = 0;
+    firstStep.stride = 0;
+    firstStep.speed = 0;
+    firstStep.stepPosition = prevStep;
+    stepInfoList.push_back(firstStep);
+
+    walkingDistance = 0;
+    numOfSteps = 0;
+    prevStepFrame = 0;
+    prevPrevStepFrame = 0;
+    prevCoM = (prevStep + prevPrevStep)/2;
+    originalStepMap = stepMap.clone();
+
+    stepFlagInit();
+
+    stepFlagInit();
 }
 
 void FootPrint::generateOverViewImage(Camera &cm){
@@ -1696,8 +1766,8 @@ void FootPrint::estimateStepWithMultipleCameras() {
 }
 
 void FootPrint::loadFootImages(){
-    leftFootIm = cv::imread("../Data/Images/left.png");
-    rightFootIm = cv::imread("../Data/Images/right.png");
+    leftFootIm = cv::imread(SHOW_IMAGE_PATH + "/left.png");
+    rightFootIm = cv::imread(SHOW_IMAGE_PATH + "/right.png");
 
     //色をセット
     for(int i = 0; i < leftFootIm.rows; i++){
@@ -1711,12 +1781,37 @@ void FootPrint::loadFootImages(){
         }
     }
 
-    //スケールを変更
-    double baseScale = 250.0;
-    cv::resize(leftFootIm, leftFootIm, cv::Size(), double(PLANE_WIDTH)/baseScale, double(PLANE_WIDTH)/baseScale);
-    cv::resize(rightFootIm, rightFootIm, cv::Size(), double(PLANE_WIDTH)/baseScale, double(PLANE_WIDTH)/baseScale);
+    footImCenter = cv::Point2f(rightFootIm.cols/2, rightFootIm.rows/2);
 
-    footImCenter = cv::Point2f(leftFootIm.cols/2, leftFootIm.rows/2);
+    //Affine変換の基準となる3点を決定
+    string fileName = SHOW_IMAGE_PATH + "/affinePoints.txt";
+    ifstream affinePts(fileName);
+    vector<cv::Point2f> clickedPoints;
+    if(affinePts.fail()) {
+        yagi::clickPoints(rightFootIm, clickedPoints, fileName);
+    }else{
+        string str;
+        vector<string> strList;
+        while (getline(affinePts, str))
+        {
+            cv::Point2f pt;
+            strList = yagi::split(str, ' ');
+            pt.x = stof(strList[0]);
+            pt.y = stof(strList[1]);
+            clickedPoints.push_back(pt);
+        }
+    }
+    rightAffinePoints = clickedPoints;
+    leftAffinePoints.push_back(cv::Point2f(rightFootIm.rows - rightAffinePoints[0].x, rightAffinePoints[0].x));
+    leftAffinePoints.push_back(cv::Point2f(rightFootIm.rows - rightAffinePoints[1].x, rightAffinePoints[1].y));
+    leftAffinePoints.push_back(cv::Point2f(rightFootIm.rows - rightAffinePoints[2].x, rightAffinePoints[2].y));
+//
+//    cv::circle(leftFootIm, leftAffinePoints[0], 2, cv::Scalar(0,0,255), 2);
+//    cv::circle(leftFootIm, leftAffinePoints[1], 2, cv::Scalar(255,0,255), 2);
+//    cv::circle(leftFootIm, leftAffinePoints[2], 2, cv::Scalar(255,0,255), 2);
+//
+//    cv::imshow("a", leftFootIm);
+//    cv::waitKey();
 }
 
 void FootPrint::showAxis(Camera & cm){
@@ -1803,22 +1898,58 @@ void FootPrint::selectWorldPoints(std::vector<cv::Point2f> & scalePoints){
     }
 }
 
-void FootPrint::adjustScaleUsingHomograsphy(){
+void obtainCheckerBoardPoints( vector<cv::Point2f>& imagePoints,  vector<cv::Point2f>& scalePoints,
+                               const int W, const int H, const float SCALE, cv::Mat image, const int AREA_W, const int AREA_H){
+    //チェッカーポイントの座標格納
+    vector<cv::Point2f> checkerCorners;
+    yagi::generatePointCloudsIn2Dscale(checkerCorners, H, W, SCALE, AREA_W, AREA_H);
+    scalePoints = checkerCorners;
+    vector<cv::Point2f> detectedCorners;
+    cv::findChessboardCorners(image, cv::Size(W, H), detectedCorners);
+    cv::drawChessboardCorners(image, cv::Size(W,H), detectedCorners, true);
+    cv::imshow("chess board", image);
+    cv::waitKey(0);
+    imagePoints = detectedCorners;
+}
+
+vector<cv::Point2f> scalingPts(vector<cv::Point2f>& pts, float scale){
+    vector<cv::Point2f> scalePts;
+    for(cv::Point2f pt: pts){
+        pt.x *= scale;
+        pt.y *= scale;
+        scalePts.push_back(pt);
+    }
+    return scalePts;
+}
+
+void FootPrint::adjustScaleUsingHomography(){
     getBackGroundImage();
     vector<cv::Point2f> imagePoints;
     vector<cv::Point2f> scalePoints;
-    selectImagePoints(imagePoints);
-    selectWorldPoints(scalePoints);
-    warpH = cv::findHomography(imagePoints, scalePoints);
-    cv::warpPerspective(backGroundImage, overViewImage, warpH, cv::Size(scalePoints[2].x, scalePoints[2].y));
-//    cv::imshow("overViewImage", overViewImage);
-//    cv::waitKey();
+    cv::Mat image = cv::imread(_projects_path + "/calibrationBoard.jpg");
+    if(!image.empty()) {
+        int W = 9;
+        int H = 6;
+        float SCALE = 100.0;
+        backGroundImage = image;
+        obtainCheckerBoardPoints(imagePoints, scalePoints, W, H, SCALE, image, TARGET_AREA_WIDTH * 1000, TARGET_AREA_HEIGHT * 1000);
+        scalePoints = scalingPts(scalePoints, RESULT_SCALE);
+        warpH = cv::findHomography(imagePoints, scalePoints);
+        cv::warpPerspective(backGroundImage, overViewImage, warpH, cv::Size(TARGET_AREA_WIDTH * 1000 * 2 * RESULT_SCALE, TARGET_AREA_HEIGHT * 1000 * 2 * RESULT_SCALE));
+    }else{
+        selectImagePoints(imagePoints);
+        selectWorldPoints(scalePoints);
+        warpH = cv::findHomography(imagePoints, scalePoints);
+        cv::warpPerspective(backGroundImage, overViewImage, warpH, cv::Size(scalePoints[2].x, scalePoints[2].y));
+    }
+    cv::imshow("backGround", overViewImage);
+    cv::waitKey();
 };
 
 void FootPrint::estimateStepUsingHomography(){
 
     //投影領域の決定
-    adjustScaleUsingHomograsphy();
+    adjustScaleUsingHomography();
 
     //動画読み込み
     cv::VideoCapture capture(_projects_path + _project_name + VIDEO_TYPE);
@@ -1833,40 +1964,41 @@ void FootPrint::estimateStepUsingHomography(){
 
     int frameID = 0;
     while (1) {
-        capture.read(frame);
-//        cv::resize(frame, frame, cv::Size(), 0.1,0.1);
+        if(capture.read(frame)) {
+            auto datumProcessed = opWrapper.emplaceAndPop(frame); //OpenPose
+            frame = datumProcessed->at(0).cvOutputData;
+            int k = cv::waitKey(1);
+            op::Array<float> poses = datumProcessed->at(0).poseKeypoints;
 
-        auto datumProcessed = opWrapper.emplaceAndPop(frame); //OpenPose
-        frame = datumProcessed->at(0).cvOutputData;
-        cv::imshow("User worker GUI", frame);
-        int k = cv::waitKey(1);
-        op::Array<float> poses = datumProcessed->at(0).poseKeypoints;
-
-        if (!poses.getSize().empty()) { //誰か検出されたら
-            if (frameID == 0) {
-                firstImage = frame;
-                DetectTargetPerson(poses, personList, newTarget);
-                InitStepMaps();
-            } else {
-                getPosesInImage(poses, personList);
-                tracking(prevTarget, newTarget, personList);
-                VisualizeTarget(newTarget, frame);
-                voteForHomography(newTarget, frameID);
+            if (!poses.getSize().empty()) { //誰か検出されたら
+                if (frameID == 0) {
+                    firstImage = frame;
+                    DetectTargetPerson(poses, personList, newTarget);
+                    InitStepMaps(newTarget);
+                } else {
+                    getPosesInImage(poses, personList);
+                    tracking(prevTarget, newTarget, personList);
+                    VisualizeTarget(newTarget, frame);
+                    voteForHomography(newTarget, frameID);
 //                renewResultInfoIm(frame);
 //                showResult();
-            }
-            cv::imshow("stepMap", stepMap);
-            cv::imshow("fieldMap", trajectoryMap);
+                }
 
-            prevTarget = newTarget;
-            personList.clear();
+                cv::resize(frame, frame, cv::Size(), 640.0/frame.cols, 320.0/frame.rows);
+                cv::imshow("User worker GUI", frame);
+                cv::imshow("stepMap", stepMap);
+                cv::imshow("fieldMap", trajectoryMap);
 
-            if (k == 27) {
-                capture.release();
-                cv::destroyAllWindows();
-                break;
+                prevTarget = newTarget;
+                personList.clear();
+
+                if (k == 27) {
+                    capture.release();
+                    cv::destroyAllWindows();
+                    break;
+                }
+                frameID++;
             }
-            frameID++;
         }
     }
 }
@@ -1912,7 +2044,7 @@ void FootPrint::estimateStepWithWebCam(){
             if (frameID == 0) {
                 DetectTargetPerson(poses, personList, newTarget);
                 InitVoteListWebCam(newTarget, cm);
-                InitStepMaps();
+//                InitStepMaps();
                 showAxis(cm);
 
             } else {
@@ -1937,93 +2069,131 @@ void FootPrint::estimateStepWithWebCam(){
     }
 }
 
-bool ifStepped(vector<bool>vec){
-    int numOfTrue = 0;
-    for(bool tmp : vec){
-        if(tmp)
-            numOfTrue++;
-    }
-    return (numOfTrue == 2);
+
+vector<bool> FootPrint::getFootFlag(const int id){
+    if(id == 2)
+        return rightStepFlag;
+    return leftStepFlag;
 }
 
 double estimateDegree(cv::Point2f pt1, cv::Point2f pt2){
     float a, b;
     yagi::getGradSegment(pt1, pt2, &a, &b);
 
-    cv::Mat debug = cv::Mat::zeros(400,400,CV_8UC3);
-    cv::circle(debug, pt1, 2, cv::Scalar(255,0,0), 2);
-    cv::circle(debug, pt2, 2, cv::Scalar(0,255,0), 2);
-    cv::imshow("aa", debug);
-    cv::waitKey(1);
+//    cv::Mat debug = cv::Mat::zeros(400,400,CV_8UC3);
+//    cv::circle(debug, pt1, 2, cv::Scalar(255,0,0), 2);
+//    cv::circle(debug, pt2, 2, cv::Scalar(0,255,0), 2);
+//    cv::imshow("aa", debug);
+//    cv::waitKey(1);
     double radian = atan(double(a));
     double deg = radian/(PI/180);
-    cout << deg << endl;
-
-//    if(pt1.y > pt2.y){
-//        deg += 180;
-//    }
 
     if(pt1.x > pt2.x && pt1.y > pt2.y){
-        cout << "a" << endl;
-
+        deg = -deg - 90;
     }else if(pt1.x > pt2.x && pt1.y <= pt2.y){
-        cout << "d" << endl;
-        deg = 90 - deg;
-
+        deg = -(90 + deg);
     }else if(pt1.x <= pt2.x && pt1.y > pt2.y){
-        deg += 180;
+        deg = -(-90 + deg);
     }else{
-        cout << "c" << endl;
-        deg = 180 + (90 - deg);
+        deg = 90 - deg;
     }
     cout << endl;
     return deg;
 }
 
 
-double FootPrint::calcAngle(Foot& foot, string str){
-    double deg = estimateDegree(foot.toe2, foot.ankle);
-    cv::Mat Rmat = cv::getRotationMatrix2D(footImCenter, (270 - deg), 1.0);
-    cv::Mat warped;
-    cv::Mat stepMap_Copy = stepMap.clone();
+double FootPrint::calcAngle(const int footID){
     cv::Vec3b color;
+    Foot foot;
     cv::Mat footIm;
-    if(str == "R") {
+    if(footID == 2) {
+        foot = rightFoot;
         color = RIGHT_FOOT_COLOR;
         footIm = rightFootIm;
     }
-    if(str == "L") {
+    if(footID == 5) {
+        foot = leftFoot;
         color = LEFT_FOOT_COLOR;
         footIm = leftFootIm;
     }
 
+    float dist = calc2PointDistance(foot.toe2, foot.ankle);
+    float scale = dist/(rightFootIm.rows / 2);
+    float deg = estimateDegree(foot.toe2, foot.ankle);
+    cv::Mat Rmat = cv::getRotationMatrix2D(footImCenter, deg, 1.0);
+    cv::Mat warped;
+    cv::Mat stepMap_Copy = stepMap.clone();
+
+
     cv::warpAffine(footIm, warped, Rmat, footIm.size());
+    cv::resize(warped, warped, cv::Size(), scale, scale);
     cv::imshow("base", warped);
     for(int i = 0; i < warped.rows; i++){
         for(int j = 0; j < warped.cols; j++){
             if((warped.at<cv::Vec3b>(i,j) == color)){
-                cv::Point2f stepMapCoord(j + foot.ankle.x, i + foot.ankle.y);
+                cv::Point2f stepMapCoord(j + foot.ankle.x - (footImCenter.x * scale), i + foot.ankle.y - (footImCenter.y * scale));
                 stepMap_Copy.at<cv::Vec3b>(stepMapCoord) = color;
             }
         }
     }
 
     cv::imshow("stepMap_Copy", stepMap_Copy);
-    cv::waitKey(0);
+    cv::waitKey(1);
     return deg;
+
+
+//    //３点でアフィン変換
+//    cv::Mat footIm;
+//    cv::Vec3b footColor;
+//    vector<cv::Point2f> imageFootPoints;
+//    vector<cv::Point2f> *virtualFootPoints;
+//    imageFootPoints.push_back(foot.toe1);
+//    imageFootPoints.push_back(foot.toe2);
+//    imageFootPoints.push_back(foot.ankle);
+//
+//    cv::Mat footPrintIm = stepMap.clone();
+//
+//    if(str == "R") {
+//        virtualFootPoints = &rightAffinePoints;
+//        footColor = RIGHT_FOOT_COLOR;
+//        footIm = rightFootIm;
+//    }
+//    if(str == "L") {
+//        virtualFootPoints = &leftAffinePoints;
+//        footColor = LEFT_FOOT_COLOR;
+//        footIm = leftFootIm;
+//    }
+//
+//    cv::Mat warpedFootIm;
+//    cv::Mat affineH = cv::getAffineTransform(*virtualFootPoints, imageFootPoints);
+//    cv::warpAffine(footIm, warpedFootIm, affineH, stepMap.size());
+//
+//    cv::imshow("wa", warpedFootIm);
+//    cv::waitKey();
+//
+//    for(int i = 0; i < stepMap.rows; i++){
+//        for(int j = 0; j < stepMap.cols; j++){
+//            if(warpedFootIm.at<cv::Vec3b>(i,j) == footColor) {
+//                footPrintIm.at<cv::Vec3b>(i, j) = warpedFootIm.at<cv::Vec3b>(i, j);
+//            }
+//        }
+//    }
+//    cv::imshow("s", footPrintIm);
+//    cv::waitKey();
+
+//    ２点使って回転角度出す方法
 }
 
 
 
 void FootPrint::visualizeFootPrint(){
-    if(ifStepped(rightStepFlag)){
-        double angle = calcAngle(rightFoot, "R");
-    }
-    if(ifStepped(leftStepFlag)){
-        double angle = calcAngle(leftFoot, "L");
-    }
-    rightStepFlag.clear();
-    leftStepFlag.clear();
+//    if(ifStepped(rightStepFlag)){
+//        double angle = calcAngle(rightFoot, "R");
+//    }
+//    if(ifStepped(leftStepFlag)){
+//        double angle = calcAngle(leftFoot, "L");
+//    }
+
 }
 
 void FootPrint::estimateStepAngle(Camera& cm, OpenPosePerson& newTarget, const int frameID){
@@ -2252,7 +2422,6 @@ void FootPrint::voteForHomography(OpenPosePerson target, const int imID){
     vector<cv::Point2f> stepedPoints = stepedPointList[stepedListPointer];
     int dstChannel = imID % CHANNEL;
 
-
     for(int bdID = 0; bdID < 6 ; bdID ++) {
         cv::Point2f pt = target._body_parts_coord[bdID + 19];
         cv::Mat *voteMap = &voteMapList[bdID];
@@ -2264,19 +2433,40 @@ void FootPrint::voteForHomography(OpenPosePerson target, const int imID){
             for (int j = 0; j < VOTE_RANGE; j++) {
                 int xIdx = int(warpPt.x + i - (VOTE_RANGE / 2));
                 int yIdx = int(warpPt.y + j - (VOTE_RANGE / 2));
-//                int xIdx = int(pt.x + i);
-//                int yIdx = int(pt.y + j);
                 cv::Point2f stepPt(xIdx, yIdx);
-                voteMap->at<cv::Vec<unsigned char, CHANNEL>>(stepPt)[dstChannel] = 1;
-//                HeatVoteMap.at<float>(stepPt) += 1;
-                if (sumVecElem(voteMap->at<cv::Vec<unsigned char, CHANNEL>>(stepPt)) >= STEP_THRESHOLD) {
-                    trajectoryMap.at<cv::Vec3b>(stepPt) = color;
-                    stepMap.at<cv::Vec3b>(stepPt) = color;
-                    stepedPoints.push_back(stepPt);
-                    addNewStep(stepPt, imID);
 
-                    if (xIdx == warpPt.x && yIdx == warpPt.y) {
-                        renewStepFlag(bdID, cv::Point2f(warpPt.x, warpPt.y));
+                //投影点がVOTEmap内にあれば
+                if (xIdx >= 0 && xIdx < voteMap->cols && yIdx >= 0 && yIdx < voteMap->rows) {
+                    voteMap->at<cv::Vec<unsigned char, CHANNEL>>(stepPt)[dstChannel] = 1;
+
+                    //投票数がしきい値超えていれば
+                    if (sumVecElem(voteMap->at<cv::Vec<unsigned char, CHANNEL>>(stepPt)) >= STEP_THRESHOLD) {
+                        trajectoryMap.at<cv::Vec3b>(stepPt) = color;
+                        stepMap.at<cv::Vec3b>(stepPt) = color;
+                        stepedPoints.push_back(stepPt);
+
+                        //かかとの点で歩数としてカウントするか決定
+                        if(!stepped) {
+                            if (bdID == 2 || bdID == 5) {
+                                if (laststepID != bdID) {
+                                    addNewStep(stepPt, imID, bdID);
+                                }
+                            }
+                        }
+
+                        //投影点そのものであるとき
+                        if (abs(xIdx - int(warpPt.x)) == 0 && abs(yIdx - int(warpPt.y)) == 0) {
+
+                            //接地flagを立て接地点も更新
+                            renewStepFlag(bdID + 19, cv::Point2f(warpPt.x, warpPt.y));
+
+                        }
+
+                        //新たな接地があり、かつ3点検出
+                        if(stepped && ifStepped(getFootFlag(laststepID))){
+                            calcAngle(laststepID);
+                            stepped = false;
+                        }
                     }
                 }
             }
@@ -2289,6 +2479,11 @@ void FootPrint::voteForHomography(OpenPosePerson target, const int imID){
         stepMap.at<cv::Vec3b>(pt) = originalStepMap.at<cv::Vec3b>(pt);
     }
     stepedPointList[stepedListPointer] = stepedPoints;
+
+    //StepFlagのリセット
+    rightStepFlag.clear();
+    leftStepFlag.clear();
+    stepFlagInit();
 
     cv::imshow("stepMap", stepMap);
 
