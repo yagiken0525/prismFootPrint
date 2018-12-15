@@ -11,6 +11,8 @@
 #include <opencv2/opencv.hpp>
 #include <iostream>
 #include <vector>
+#include <openpose/core/array.hpp>
+
 
 #define CHANNEL 15
 #define PI 3.14
@@ -81,6 +83,7 @@ public:
     cv::Point2f footImCenter;
     OpenPosePerson prevTargetPerson;
     float DIST_RANGE; // 画像投影点の内どれくらいの距離の点を接地点とみなすか
+    float RESULT_SCALE; // 画像投影点の内どれくらいの距離の点を接地点とみなすか
     int VOTE_RANGE; // 何投票されたら接地点とみなすか
     int MIN_STRIDE;
     int VISUALIZE_FRAMES;
@@ -89,6 +92,8 @@ public:
     int CAMERA_FIRST_ID; // 接地カメラの個数
     int IMAGE_NUM; // 接地カメラの個数
     int SEARCHING_RECT; // 接地カメラの個数
+    int RESULT_IMAGE_WIDTH; // 接地カメラの個数
+    int RESULT_IMAGE_HEIGHT; // 接地カメラの個数
     std::string VIDEO_TYPE = "MP4"; // 接地カメラの個数
     int VIDEO_FPS = 30; // 動画のfps
     bool FACE_PLY = false; // 出力をメッシュファイルにするかどうか
@@ -104,16 +109,21 @@ public:
     int FLOOR_WIDTH;
     int PLANE_WIDTH = 200;
     int POINT_DIST = 10;
+    float TARGET_AREA_WIDTH;
+    float TARGET_AREA_HEIGHT;
     bool SHOW_TRAJECTORY;
     bool PLOT_ON_WARPED_IMAGE;
     bool USE_WEBCAM;
+    bool TRACKING_MAX_PROB;
+    bool TRACKING_CLICKED;
+    bool USE_HOMOGRAPHY;
     bool ESTIMATE_RT;
     cv::Vec3b RIGHT_FOOT_COLOR;
     cv::Vec3b LEFT_FOOT_COLOR;
 
     std::vector<ImageInfo> imWebCamList;
     Camera webCam;
-
+    cv::Mat warpH;
 
     std::string _project_name;
     std::string _data_path;
@@ -123,10 +133,17 @@ public:
     std::string _camera_path;
     std::string _sfm_projects_path;
 
+    void voteForHomography(OpenPosePerson target, const int imID);
+    void selectImagePoints(std::vector<cv::Point2f> & clickedPoints);
+    void selectWorldPoints(std::vector<cv::Point2f> & clickedPoints);
+    void adjustScaleUsingHomograsphy();
+    void estimateStepUsingHomography();
+    void getBackGroundImage();
     void cropStepMap();
+    void generateOverViewImage(Camera &cm);
     void showAxis(Camera & cm);
     void loadFootImages();
-    void renewStepCoM(const int bdID, cv::Point2f pt);
+    void renewStepFlag(const int bdID, cv::Point2f pt);
     void initVoteChannel(const int dstChannel, cv::Mat *voteMap);
     void deletePrevSteps();
     void addNewStep(cv::Point2f stepPt, const int i);
@@ -155,6 +172,7 @@ public:
     void estimateCameraPoseWithCheckerBoard();
     void estimateCameraPoseWithClickingPoints();
     void findFootPrintFromCameraInfo();
+    void DetectTargetPerson(op::Array<float>& poses, std::vector<OpenPosePerson>& personList, OpenPosePerson& target);
     void generatePlaneModel();
     void estimateCameraPose();
     void projectPoints(CameraInfo& cm);
@@ -200,6 +218,9 @@ public:
     cv::Mat HeatMap;
     cv::Mat HeatVoteMap;
     cv::Mat ResultInfo;
+    cv::Mat backGroundImage;
+    cv::Mat overViewImage;
+    cv::Mat firstImage;
     std::vector<std::vector<cv::Point2f>> detectedCornerList;
     cv::Point3f imagePointTo3dPoint(cv::Point2f point);
     cv::Point2f worldPointToImagePoint(cv::Point3f point, Camera* camera);

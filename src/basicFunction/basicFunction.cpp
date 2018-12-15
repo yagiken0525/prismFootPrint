@@ -187,6 +187,40 @@ void yagi::drawLine(cv::Mat edgeMask, cv::Point2f pt1, cv::Point2f pt2, int thic
 }
 
 
+void yagi::push4PointsToVector(vector<cv::Point2f> &points, cv::Point2f Hb_pt1, cv::Point2f Hb_pt2, cv::Point2f Hb_pt3, cv::Point2f Hb_pt4){
+    points.push_back(Hb_pt1);
+    points.push_back(Hb_pt2);
+    points.push_back(Hb_pt3);
+    points.push_back(Hb_pt4);
+}
+
+void yagi::push4_3DPointsToVector(vector<cv::Point3f> &points, cv::Point3f Hb_pt1, cv::Point3f Hb_pt2, cv::Point3f Hb_pt3, cv::Point3f Hb_pt4){
+    points.push_back(Hb_pt1);
+    points.push_back(Hb_pt2);
+    points.push_back(Hb_pt3);
+    points.push_back(Hb_pt4);
+}
+
+cv::Rect yagi::obtainRectFrom4Points(std::vector<cv::Point2f> &points){
+    float minX, maxX, minY, maxY;
+    minX = 10000;
+    minY = 10000;
+    maxX = 0;
+    maxY = 0;
+    for(cv::Point2f pt: points){
+        if(minX > pt.x)
+            minX = pt.x;
+        if(minY > pt.y)
+            minY = pt.y;
+        if(maxX > pt.x)
+            maxX = pt.x;
+        if(maxY > pt.y)
+            maxY = pt.y;
+    }
+    return cv::Rect(minX, minY, maxX - minX, maxY - minY);
+}
+
+
 void yagi::VecToMat(const vector<vector<unsigned char>> src, cv::Mat &dst) {
     // Assume it already has edge information
 //    cout << "aa" << endl;
@@ -253,6 +287,30 @@ void  yagi::mycalcfloatWarpedPoint(vector<cv::Point2f> next, vector<cv::Point2f>
         warped->push_back(warp_pt);
 
     }
+}
+
+cv::Point2f yagi::warpPoint(cv::Point2f srcPt, cv::Mat H) {
+
+    cv::Point2f warp_pt;
+
+    warp_pt.x =
+            H.at<double>(0, 0) * srcPt.x +
+            H.at<double>(0, 1) * srcPt.y +
+            H.at<double>(0, 2) * 1;
+
+    warp_pt.y =
+            H.at<double>(1, 0) * srcPt.x +
+            H.at<double>(1, 1) * srcPt.y +
+            H.at<double>(1, 2) * 1;
+
+    float z = H.at<double>(2, 0) * srcPt.x +
+              H.at<double>(2, 1) * srcPt.y +
+              H.at<double>(2, 2) * 1;
+
+    warp_pt.x = warp_pt.x / z;
+    warp_pt.y = warp_pt.y / z;
+
+    return warp_pt;
 }
 
 

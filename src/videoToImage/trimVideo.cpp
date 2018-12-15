@@ -43,10 +43,10 @@ namespace videoToImage {
         }
 
         //出力する動画ファイルの設定をします。拡張子はWMV1で、毎秒15フレーム、画像縦横サイズは1024*1024。
-        string output_file_name = output_path + video_name + video_type;
+        string output_file_name = output_path + video_name + "_trimmed" + ".mov";
         cout << "Saving video name: " << output_file_name << endl;
         cv::VideoWriter writer(output_file_name,
-                               CV_FOURCC('M', 'P', '4', 'V'),
+                               CV_FOURCC('m', 'p', '4', 'v'),
                                cap.get(cv::CAP_PROP_FPS),
                                cv::Size((int) cap.get(cv::CAP_PROP_FRAME_WIDTH),
                                         (int) cap.get(cv::CAP_PROP_FRAME_HEIGHT)));
@@ -64,80 +64,82 @@ namespace videoToImage {
 
         while (1) {
             cap >> img; //1フレーム分取り出してimgに保持させる
-            resize(img, img, cv::Size(), 640.0/img.cols ,320.0/img.rows);
-            if (i == 0) {
+            if(!img.empty()) {
+//                resize(img, img, cv::Size(), 640.0/img.cols ,320.0/img.rows);
+                if (i == 0) {
 
-                cv::imshow("'S' save, 'Q' quit, 'number' *100 frame skip", img);
-                int key = cv::waitKey(0);
+                    cv::imshow("'S' save, 'Q' quit, 'number' *100 frame skip", img);
+                    int key = cv::waitKey(0);
 
-                if (key == 's') {
-                    cout << "This frame was saved!" << endl;
-                    string number = yagi::digitString(frame_counter++, 4);
+                    if (key == 's') {
+                        cout << "This frame was saved!" << endl;
+                        string number = yagi::digitString(frame_counter++, 4);
 
-                    //画像保存
-                    string image_file_name;
-                    image_file_name = image_folder + "/image" + number + ".jpg";
-                    cv::imwrite(image_file_name, img);
-                    outputfile << image_file_name << endl;
+                        //画像保存
+                        string image_file_name;
+                        image_file_name = image_folder + "/image" + number + ".jpg";
+                        cv::imwrite(image_file_name, img);
+                        outputfile << image_file_name << endl;
 //                    writer.operator<<(img);
-                }
+                    }
 
-                if (key == '0') {
-                    cout << "30frame skipped" << endl;
-                    i = 30;
-                }
+                    if (key == '0') {
+                        cout << "30frame skipped" << endl;
+                        i = 30;
+                    }
 
-                if (key == '1') {
-                    cout << "100frame skipped" << endl;
-                    i = 100;
-                }
+                    if (key == '1') {
+                        cout << "100frame skipped" << endl;
+                        i = 100;
+                    }
 
-                if (key == '2') {
-                    cout << "200frame skipped" << endl;
-                    i = 200;
-                }
+                    if (key == '2') {
+                        cout << "200frame skipped" << endl;
+                        i = 200;
+                    }
 
-                if (key == '3') {
-                    cout << "300frame skipped" << endl;
-                    i = 300;
-                }
+                    if (key == '3') {
+                        cout << "300frame skipped" << endl;
+                        i = 300;
+                    }
 
-                if (key == '4') {
-                    cout << "400frame skipped" << endl;
-                    i = 400;
-                }
+                    if (key == '4') {
+                        cout << "400frame skipped" << endl;
+                        i = 400;
+                    }
 
-                if (key == '5') {
-                    cout << "500frame skipped" << endl;
-                    i = 500;
-                }
+                    if (key == '5') {
+                        cout << "500frame skipped" << endl;
+                        i = 500;
+                    }
 
-                if (key == '6') {
-                    cout << "600frame skipped" << endl;
-                    i = 600;
-                }
+                    if (key == '6') {
+                        cout << "600frame skipped" << endl;
+                        i = 600;
+                    }
 
-                if (key == '7') {
-                    cout << "700frame skipped" << endl;
-                    i = 700;
-                }
+                    if (key == '7') {
+                        cout << "700frame skipped" << endl;
+                        i = 700;
+                    }
 
-                if (key == '8') {
-                    cout << "800frame skipped" << endl;
-                    i = 800;
-                }
+                    if (key == '8') {
+                        cout << "800frame skipped" << endl;
+                        i = 800;
+                    }
 
-                if (key == '9') {
-                    cout << "900frame skipped" << endl;
-                    i = 900;
-                }
+                    if (key == '9') {
+                        cout << "900frame skipped" << endl;
+                        i = 900;
+                    }
 
-                if (key == 'q') {
-                    break;
-                }
+                    if (key == 'q') {
+                        break;
+                    }
 
-                if (key == 'z') {
-                    break;
+                    if (key == 'z') {
+                        break;
+                    }
                 }
             }
             if (i > 0)

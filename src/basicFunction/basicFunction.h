@@ -42,6 +42,8 @@ namespace yagi {
 
     void mycalcfloatWarpedPoint(std::vector<cv::Point2f> next, std::vector<cv::Point2f> *warped, cv::Mat H);
 
+    cv::Point2f warpPoint(cv::Point2f srcPt, cv::Mat H);
+
     template<typename Point>
     float calcDistance(Point p1, Point p2);
 
@@ -59,6 +61,16 @@ namespace yagi {
 
     template<typename type>
     void vectorSum(std::vector<type> vec);
+
+    void clickPoints(cv::Mat image, std::vector<cv::Point2f> & clickedPoints, const std::string filePath );
+
+    void push4PointsToVector(std::vector<cv::Point2f> &points, cv::Point2f Hb_pt1, cv::Point2f Hb_pt2, cv::Point2f Hb_pt3, cv::Point2f Hb_pt4);
+
+
+    void push4_3DPointsToVector(std::vector<cv::Point3f> &points, cv::Point3f Hb_pt1, cv::Point3f Hb_pt2, cv::Point3f Hb_pt3, cv::Point3f Hb_pt4);
+
+
+    cv::Rect obtainRectFrom4Points(std::vector<cv::Point2f> &points);
 }
 
 #endif //MAINTEST_BASICFUNCTION_H

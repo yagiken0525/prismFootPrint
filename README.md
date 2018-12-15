@@ -38,3 +38,10 @@ gait & posture idea
     - HeatMap
 - 精度
     - optiTrackとの比較実験
+    
+TODO
+    - キャリブレーションボード作成(poster印刷)
+    - 床に敷いてキャリブレーション
+    - goProで撮影し接地位置の正解取っておく
+    - 簡単な精度評価
+    - 足向き実装

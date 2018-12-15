@@ -1,3 +1,3 @@
 cmake_minimum_required(VERSION 3.5.1 FATAL_ERROR)
 
-add_library(basicFunc STATIC basicFunction.cpp basicFunction.h)
+add_library(basicFunc STATIC basicFunction.cpp basicFunction.h click4corners.cpp)
