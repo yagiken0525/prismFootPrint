@@ -1769,6 +1769,9 @@ void FootPrint::loadFootImages(){
     leftFootIm = cv::imread(SHOW_IMAGE_PATH + "/left.png");
     rightFootIm = cv::imread(SHOW_IMAGE_PATH + "/right.png");
 
+    cv::resize(leftFootIm, leftFootIm, cv::Size(), FOOTSIZE*10/leftFootIm.cols*RESULT_SCALE, FOOTSIZE*10/leftFootIm.cols*RESULT_SCALE);
+    cv::resize(rightFootIm, rightFootIm, cv::Size(), FOOTSIZE*10/rightFootIm.cols*RESULT_SCALE, FOOTSIZE*10/rightFootIm.cols*RESULT_SCALE);
+
     //色をセット
     for(int i = 0; i < leftFootIm.rows; i++){
         for(int j = 0; j < leftFootIm.cols; j++){
@@ -1783,35 +1786,35 @@ void FootPrint::loadFootImages(){
 
     footImCenter = cv::Point2f(rightFootIm.cols/2, rightFootIm.rows/2);
 
-    //Affine変換の基準となる3点を決定
-    string fileName = SHOW_IMAGE_PATH + "/affinePoints.txt";
-    ifstream affinePts(fileName);
-    vector<cv::Point2f> clickedPoints;
-    if(affinePts.fail()) {
-        yagi::clickPoints(rightFootIm, clickedPoints, fileName);
-    }else{
-        string str;
-        vector<string> strList;
-        while (getline(affinePts, str))
-        {
-            cv::Point2f pt;
-            strList = yagi::split(str, ' ');
-            pt.x = stof(strList[0]);
-            pt.y = stof(strList[1]);
-            clickedPoints.push_back(pt);
-        }
-    }
-    rightAffinePoints = clickedPoints;
-    leftAffinePoints.push_back(cv::Point2f(rightFootIm.rows - rightAffinePoints[0].x, rightAffinePoints[0].x));
-    leftAffinePoints.push_back(cv::Point2f(rightFootIm.rows - rightAffinePoints[1].x, rightAffinePoints[1].y));
-    leftAffinePoints.push_back(cv::Point2f(rightFootIm.rows - rightAffinePoints[2].x, rightAffinePoints[2].y));
+//    //Affine変換の基準となる3点を決定
+//    string fileName = SHOW_IMAGE_PATH + "/affinePoints.txt";
+//    ifstream affinePts(fileName);
+//    vector<cv::Point2f> clickedPoints;
+//    if(affinePts.fail()) {
+//        yagi::clickPoints(rightFootIm, clickedPoints, fileName);
+//    }else{
+//        string str;
+//        vector<string> strList;
+//        while (getline(affinePts, str))
+//        {
+//            cv::Point2f pt;
+//            strList = yagi::split(str, ' ');
+//            pt.x = stof(strList[0]);
+//            pt.y = stof(strList[1]);
+//            clickedPoints.push_back(pt);
+//        }
+//    }
+//    rightAffinePoints = clickedPoints;
+//    leftAffinePoints.push_back(cv::Point2f(rightFootIm.rows - rightAffinePoints[0].x, rightAffinePoints[0].x));
+//    leftAffinePoints.push_back(cv::Point2f(rightFootIm.rows - rightAffinePoints[1].x, rightAffinePoints[1].y));
+//    leftAffinePoints.push_back(cv::Point2f(rightFootIm.rows - rightAffinePoints[2].x, rightAffinePoints[2].y));
 //
 //    cv::circle(leftFootIm, leftAffinePoints[0], 2, cv::Scalar(0,0,255), 2);
 //    cv::circle(leftFootIm, leftAffinePoints[1], 2, cv::Scalar(255,0,255), 2);
 //    cv::circle(leftFootIm, leftAffinePoints[2], 2, cv::Scalar(255,0,255), 2);
 //
-//    cv::imshow("a", leftFootIm);
-//    cv::waitKey();
+    cv::imshow("a", leftFootIm);
+    cv::waitKey();
 }
 
 void FootPrint::showAxis(Camera & cm){
@@ -1987,7 +1990,7 @@ void FootPrint::estimateStepUsingHomography(){
                 cv::resize(frame, frame, cv::Size(), 640.0/frame.cols, 320.0/frame.rows);
                 cv::imshow("User worker GUI", frame);
                 cv::imshow("stepMap", stepMap);
-                cv::imshow("fieldMap", trajectoryMap);
+                cv::imshow("trajectoryMap", trajectoryMap);
 
                 prevTarget = newTarget;
                 personList.clear();
@@ -2117,28 +2120,31 @@ double FootPrint::calcAngle(const int footID){
         footIm = leftFootIm;
     }
 
-    float dist = calc2PointDistance(foot.toe2, foot.ankle);
-    float scale = dist/(rightFootIm.rows / 2);
+//    float dist = calc2PointDistance(foot.toe2, foot.ankle);
+//    float scale = dist/(rightFootIm.rows / 2);
+
     float deg = estimateDegree(foot.toe2, foot.ankle);
     cv::Mat Rmat = cv::getRotationMatrix2D(footImCenter, deg, 1.0);
     cv::Mat warped;
-    cv::Mat stepMap_Copy = stepMap.clone();
+//    cv::Mat stepMap_Copy = stepMap.clone();
 
-
+//    float pxSizeInmm = 1/RESULT_SCALE;
+//    float scale = FOOTSIZE*10 ;
     cv::warpAffine(footIm, warped, Rmat, footIm.size());
-    cv::resize(warped, warped, cv::Size(), scale, scale);
+//    cv::resize(warped, warped, cv::Size(), scale, scale);
     cv::imshow("base", warped);
     for(int i = 0; i < warped.rows; i++){
         for(int j = 0; j < warped.cols; j++){
             if((warped.at<cv::Vec3b>(i,j) == color)){
-                cv::Point2f stepMapCoord(j + foot.ankle.x - (footImCenter.x * scale), i + foot.ankle.y - (footImCenter.y * scale));
-                stepMap_Copy.at<cv::Vec3b>(stepMapCoord) = color;
+                cv::Point2f stepMapCoord(j + foot.ankle.x - (footImCenter.x), i + foot.ankle.y - (footImCenter.y));
+//                cv::Point2f stepMapCoord(j + foot.ankle.x - (footImCenter.x * scale), i + foot.ankle.y - (footImCenter.y * scale));
+                trajectoryMap.at<cv::Vec3b>(stepMapCoord) = color;
             }
         }
     }
 
-    cv::imshow("stepMap_Copy", stepMap_Copy);
-    cv::waitKey(1);
+//    cv::imshow("stepMap_Copy", stepMap_Copy);
+//    cv::waitKey(1);
     return deg;
 
 
@@ -2441,7 +2447,6 @@ void FootPrint::voteForHomography(OpenPosePerson target, const int imID){
 
                     //投票数がしきい値超えていれば
                     if (sumVecElem(voteMap->at<cv::Vec<unsigned char, CHANNEL>>(stepPt)) >= STEP_THRESHOLD) {
-                        trajectoryMap.at<cv::Vec3b>(stepPt) = color;
                         stepMap.at<cv::Vec3b>(stepPt) = color;
                         stepedPoints.push_back(stepPt);
 
@@ -2455,7 +2460,7 @@ void FootPrint::voteForHomography(OpenPosePerson target, const int imID){
                         }
 
                         //投影点そのものであるとき
-                        if (abs(xIdx - int(warpPt.x)) == 0 && abs(yIdx - int(warpPt.y)) == 0) {
+                        if (abs(xIdx - int(warpPt.x)) <= 5 && abs(yIdx - int(warpPt.y)) <= 5) {
 
                             //接地flagを立て接地点も更新
                             renewStepFlag(bdID + 19, cv::Point2f(warpPt.x, warpPt.y));

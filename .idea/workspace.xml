@@ -21,8 +21,6 @@
     <list default="true" id="6a217829-5f3a-4d74-88c9-5abb31b4f07c" name="Default" comment="">
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/FootPrint.cpp" afterPath="$PROJECT_DIR$/src/FootPrint.cpp" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/FootPrint.h" afterPath="$PROJECT_DIR$/src/FootPrint.h" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/basicFunction/basicFunction.cpp" afterPath="$PROJECT_DIR$/src/basicFunction/basicFunction.cpp" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/basicFunction/basicFunction.h" afterPath="$PROJECT_DIR$/src/basicFunction/basicFunction.h" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main.cpp" afterPath="$PROJECT_DIR$/src/main.cpp" />
     </list>
     <ignored path="$PROJECT_DIR$/cmake-build-release/" />
@@ -35,11 +33,11 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="main.cpp" pinned="false" current-in-tab="false">
+      <file leaf-file-name="main.cpp" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/main.cpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="136">
-              <caret line="62" column="29" lean-forward="false" selection-start-line="62" selection-start-column="29" selection-end-line="62" selection-end-column="29" />
+            <state relative-caret-position="119">
+              <caret line="43" column="33" lean-forward="false" selection-start-line="43" selection-start-column="33" selection-end-line="43" selection-end-column="33" />
               <folding>
                 <element signature="e#0#19#0" expanded="true" />
               </folding>
@@ -50,8 +48,8 @@
       <file leaf-file-name="FootPrint.h" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/FootPrint.h">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="150">
-              <caret line="255" column="17" lean-forward="true" selection-start-line="255" selection-start-column="17" selection-end-line="255" selection-end-column="17" />
+            <state relative-caret-position="235">
+              <caret line="80" column="17" lean-forward="false" selection-start-line="80" selection-start-column="17" selection-end-line="80" selection-end-column="17" />
               <folding>
                 <element signature="e#112#141#0" expanded="true" />
               </folding>
@@ -59,11 +57,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="FootPrint.cpp" pinned="false" current-in-tab="true">
+      <file leaf-file-name="FootPrint.cpp" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/FootPrint.cpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="196">
-              <caret line="2467" column="44" lean-forward="true" selection-start-line="2467" selection-start-column="44" selection-end-line="2467" selection-end-column="44" />
+            <state relative-caret-position="107">
+              <caret line="1771" column="80" lean-forward="false" selection-start-line="1771" selection-start-column="80" selection-end-line="1771" selection-end-column="80" />
               <folding>
                 <element signature="e#39#61#0" expanded="true" />
               </folding>
@@ -123,7 +121,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>Point2f</find>
       <find>min</find>
       <find>projectPo</find>
       <find>PLANE_WIDTH</find>
@@ -153,9 +150,9 @@
       <find>InitStep</find>
       <find>visu</find>
       <find>ifStepped</find>
+      <find>left</find>
     </findStrings>
     <replaceStrings>
-      <replace>.</replace>
       <replace>targetPerson</replace>
       <replace>cm</replace>
       <replace>projectPtsMat</replace>
@@ -185,6 +182,7 @@
       <replace>[0] = true</replace>
       <replace>adjustScaleUsingHomography</replace>
       <replace>footColor</replace>
+      <replace>right</replace>
     </replaceStrings>
     <dirStrings>
       <dir>$PROJECT_DIR$/Data/Projects/test/videos</dir>
@@ -211,8 +209,8 @@
         <option value="$PROJECT_DIR$/Data/Projects/lab1127/scale.txt" />
         <option value="$PROJECT_DIR$/src/basicFunction/basicFunction.h" />
         <option value="$PROJECT_DIR$/src/basicFunction/basicFunction.cpp" />
-        <option value="$PROJECT_DIR$/src/main.cpp" />
         <option value="$PROJECT_DIR$/src/FootPrint.h" />
+        <option value="$PROJECT_DIR$/src/main.cpp" />
         <option value="$PROJECT_DIR$/src/FootPrint.cpp" />
       </list>
     </option>
@@ -378,12 +376,12 @@
       <workItem from="1543484584523" duration="19030000" />
       <workItem from="1544251025355" duration="1517000" />
       <workItem from="1544667691859" duration="1617000" />
-      <workItem from="1544760466972" duration="46047000" />
+      <workItem from="1544760466972" duration="47151000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="103550000" />
+    <option name="totallyTimeSpent" value="104654000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="1984" y="-4" width="1857" height="1085" extended-state="6" />
@@ -439,7 +437,7 @@
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
-      <option name="time" value="251" />
+      <option name="time" value="253" />
     </breakpoint-manager>
     <watches-manager />
   </component>
@@ -800,30 +798,30 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/FootPrint.h">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="150">
-          <caret line="255" column="17" lean-forward="true" selection-start-line="255" selection-start-column="17" selection-end-line="255" selection-end-column="17" />
+        <state relative-caret-position="235">
+          <caret line="80" column="17" lean-forward="false" selection-start-line="80" selection-start-column="17" selection-end-line="80" selection-end-column="17" />
           <folding>
             <element signature="e#112#141#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/main.cpp">
+    <entry file="file://$PROJECT_DIR$/src/FootPrint.cpp">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="136">
-          <caret line="62" column="29" lean-forward="false" selection-start-line="62" selection-start-column="29" selection-end-line="62" selection-end-column="29" />
+        <state relative-caret-position="107">
+          <caret line="1771" column="80" lean-forward="false" selection-start-line="1771" selection-start-column="80" selection-end-line="1771" selection-end-column="80" />
           <folding>
-            <element signature="e#0#19#0" expanded="true" />
+            <element signature="e#39#61#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/FootPrint.cpp">
+    <entry file="file://$PROJECT_DIR$/src/main.cpp">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="196">
-          <caret line="2467" column="44" lean-forward="true" selection-start-line="2467" selection-start-column="44" selection-end-line="2467" selection-end-column="44" />
+        <state relative-caret-position="119">
+          <caret line="43" column="33" lean-forward="false" selection-start-line="43" selection-start-column="33" selection-end-line="43" selection-end-column="33" />
           <folding>
-            <element signature="e#39#61#0" expanded="true" />
+            <element signature="e#0#19#0" expanded="true" />
           </folding>
         </state>
       </provider>

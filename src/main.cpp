@@ -9,7 +9,7 @@ using namespace cv;
 int main() {
     FootPrint footPrint("lab1127");
     footPrint.VIDEO_TYPE = ".MP4"; // 動画拡張子
-
+    footPrint.FOOTSIZE = 26; //足のサイズ(cm)
     footPrint.USE_WEBCAM = false; // webカメラ使うか
     footPrint.USE_HOMOGRAPHY = true; // webカメラ使うか
     footPrint.RESULT_SCALE = 0.1; // 接地判定のための投票数しきい値

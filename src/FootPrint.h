@@ -78,6 +78,7 @@ public:
     std::vector<FootPrint::CameraInfo> CameraInfoList;
 
     //しきい値
+    int FOOTSIZE;
     cv::Mat leftFootIm;
     cv::Mat rightFootIm;
     cv::Point2f footImCenter;
