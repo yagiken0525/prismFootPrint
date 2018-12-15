@@ -1813,8 +1813,8 @@ void FootPrint::loadFootImages(){
 //    cv::circle(leftFootIm, leftAffinePoints[1], 2, cv::Scalar(255,0,255), 2);
 //    cv::circle(leftFootIm, leftAffinePoints[2], 2, cv::Scalar(255,0,255), 2);
 //
-    cv::imshow("a", leftFootIm);
-    cv::waitKey();
+//    cv::imshow("a", leftFootIm);
+//    cv::waitKey();
 }
 
 void FootPrint::showAxis(Camera & cm){
@@ -1983,14 +1983,15 @@ void FootPrint::estimateStepUsingHomography(){
                     tracking(prevTarget, newTarget, personList);
                     VisualizeTarget(newTarget, frame);
                     voteForHomography(newTarget, frameID);
+                    showResultHomography();
+
 //                renewResultInfoIm(frame);
-//                showResult();
                 }
 
                 cv::resize(frame, frame, cv::Size(), 640.0/frame.cols, 320.0/frame.rows);
                 cv::imshow("User worker GUI", frame);
-                cv::imshow("stepMap", stepMap);
-                cv::imshow("trajectoryMap", trajectoryMap);
+//                cv::imshow("stepMap", stepMap);
+//                cv::imshow("trajectoryMap", trajectoryMap);
 
                 prevTarget = newTarget;
                 personList.clear();
@@ -2482,6 +2483,7 @@ void FootPrint::voteForHomography(OpenPosePerson target, const int imID){
     //stepMapから一定フレーム前の接地点を消去
     for (cv::Point2f pt : stepedPointList[stepedListPointer]) {
         stepMap.at<cv::Vec3b>(pt) = originalStepMap.at<cv::Vec3b>(pt);
+//        trajectoryMap.at<cv::Vec3b>(pt) = originalStepMap.at<cv::Vec3b>(pt);
     }
     stepedPointList[stepedListPointer] = stepedPoints;
 
@@ -2585,6 +2587,30 @@ void FootPrint::showResult(){
 
     cv::namedWindow("Result",CV_WINDOW_AUTOSIZE);
     cv::resize(stepDummy, stepDummy, cv::Size(), 2,2);
+    imshow("Result",base);
+}
+
+void FootPrint::showResultHomography(){
+    int imW = trajectoryMap.cols;
+    int imH = trajectoryMap.rows;
+    cv::Mat base(imH, imW * 2, CV_8UC3);
+    cv::Mat roi1(base, cv::Rect(0 , 0 , imW , imH) );
+    cv::Mat trajDummy = trajectoryMap.clone();
+    cv::Mat stepDummy = stepMap.clone();
+    cv::Mat heatDummy = HeatMap.clone();
+    trajDummy.copyTo(roi1);
+    cv::Mat roi2( base,cv::Rect(imW , 0 , imW , imH) );
+    stepDummy.copyTo(roi2);
+//    cv::Mat roi3( base,cv::Rect(0 , imW , imW , imW) );
+//    heatDummy.copyTo(roi3);
+//    cv::Mat roi4( base,cv::Rect(imW , imW , imW , imW) );
+//    ResultInfo.copyTo(roi4);
+
+//    cv::line(base, cv::Point2f(0, imW), cv::Point2f(imW*2, imW), cv::Scalar(255,0,0), 2);
+//    cv::line(base, cv::Point2f(imW, 0), cv::Point2f(imW, imW*2), cv::Scalar(255,0,0), 2);
+
+    cv::namedWindow("Result",CV_WINDOW_AUTOSIZE);
+//    cv::resize(stepDummy, stepDummy, cv::Size(), 2,2);
     imshow("Result",base);
 }
 

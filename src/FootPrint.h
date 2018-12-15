@@ -158,6 +158,7 @@ public:
     void estimateCameraPoseWithImage(Camera& cm);
     void renewResultInfoIm(cv::Mat im);
     void showResult();
+    void showResultHomography();
     void InitVoteList();
     void InitVoteListWebCam(OpenPosePerson& ps, Camera cm);
     void vote(Camera* cm, cv::Point2f pt, const int imID, const int bdID);

@@ -12,10 +12,10 @@ int main() {
     footPrint.FOOTSIZE = 26; //足のサイズ(cm)
     footPrint.USE_WEBCAM = false; // webカメラ使うか
     footPrint.USE_HOMOGRAPHY = true; // webカメラ使うか
-    footPrint.RESULT_SCALE = 0.1; // 接地判定のための投票数しきい値
+    footPrint.RESULT_SCALE = 0.2; // 接地判定のための投票数しきい値
     footPrint.SHOW_IMAGE_PATH = "../Data/Images/bearFoot/";
     footPrint.STEP_THRESHOLD = 5; // 接地判定のための投票数しきい値
-    footPrint.VOTE_RANGE = 5; // 近接何ピクセルまで投票するか(px)
+    footPrint.VOTE_RANGE = 10; // 近接何ピクセルまで投票するか(px)
     footPrint.MIN_STRIDE = 25; // 一歩とカウントする際の最小歩幅(cm)
     footPrint.VISUALIZE_FRAMES = 50; // 近傍何フレーム分の接地点を表示するか
     footPrint.CAMERA_NUM = 1; // 接地カメラ個数
