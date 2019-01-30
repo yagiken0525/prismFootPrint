@@ -86,8 +86,8 @@ void yagi::generatePointClouds(std::vector<cv::Point3f>& objectCorners, int H, i
     int Hrange = H - Hstart;
     int Wrange = W - Wstart;
 
-    for (int i = 0; i < Hrange; i++) {
-        for (int j = 0; j < Wrange; j++) {
+    for (int i = 0; i < Hrange * 2; i++) {
+        for (int j = 0; j < Wrange * 2; j++) {
             objectCorners.push_back(cv::Point3f((j + Wstart) * SCALE, (i + Hstart) * SCALE, 0.0f));
         }
     }
