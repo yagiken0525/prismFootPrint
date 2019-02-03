@@ -22,6 +22,11 @@ struct Vote{
     std::vector<int> frameNum;
 };
 
+enum EDirection {
+    E_LEFT   = 0,
+    E_RIGHT  = 1,
+};
+
 class FootPrint {
 public:
     FootPrint(std::string project_name){
@@ -137,6 +142,8 @@ public:
 
     std::vector<bool> getFootFlag(const int id);
     void voteForHomography(OpenPosePerson target, const int imID);
+    void EstimateStep(OpenPosePerson target, const int imID);
+    void voteToStepMap(OpenPosePerson target, const int imID, const int footID);
     void stepFlagInit();
     void selectImagePoints(std::vector<cv::Point2f> & clickedPoints);
     void selectWorldPoints(std::vector<cv::Point2f> & clickedPoints);

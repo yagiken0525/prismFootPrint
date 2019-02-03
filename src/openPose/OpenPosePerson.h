@@ -23,6 +23,8 @@ public:
     std::vector<cv::Point2f> _body_parts_coord;
     std::vector<float> _probabilityList;
     cv::Rect humanRect;
+    cv::Point2f rFoot;
+    cv::Point2f lFoot;
 };
 
 

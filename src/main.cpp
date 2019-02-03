@@ -7,31 +7,34 @@ using namespace cv;
 
 
 int main() {
-    FootPrint footPrint("lab1127");
-    footPrint.VIDEO_TYPE = ".MP4"; // 動画拡張子
+    FootPrint footPrint("AH");
+    footPrint.VIDEO_TYPE = ".mp4"; // 動画拡張子
     footPrint.FOOTSIZE = 26; //足のサイズ(cm)
     footPrint.USE_WEBCAM = false; // webカメラ使うか
     footPrint.USE_HOMOGRAPHY = true; // webカメラ使うか
-    footPrint.RESULT_SCALE = 0.2; // 接地判定のための投票数しきい値
-    footPrint.SHOW_IMAGE_PATH = "../Data/Images/bearFoot/";
-    footPrint.STEP_THRESHOLD = 5; // 接地判定のための投票数しきい値
-    footPrint.VOTE_RANGE = 10; // 近接何ピクセルまで投票するか(px)
-    footPrint.MIN_STRIDE = 25; // 一歩とカウントする際の最小歩幅(cm)
-    footPrint.VISUALIZE_FRAMES = 50; // 近傍何フレーム分の接地点を表示するか
+    footPrint.RESULT_SCALE = 0.3; // 接地判定のための投票数しきい値
+    footPrint.IMAGE_HEIGHT = 320;
+    footPrint.IMAGE_WIDTH = 640;
+//    footPrint.RESULT_SCALE = 0.2; // 接地判定のための投票数しきい値
+    footPrint.SHOW_IMAGE_PATH = "../Data/Images/shows/";
+    footPrint.STEP_THRESHOLD = 4; // 接地判定のための投票数しきい値
+    footPrint.VOTE_RANGE = 15; // 近接何ピクセルまで投票するか(px)
+    footPrint.MIN_STRIDE = 30; // 一歩とカウントする際の最小歩幅(cm)
+    footPrint.VISUALIZE_FRAMES = 3000; // 近傍何フレーム分の接地点を表示するか
     footPrint.CAMERA_NUM = 1; // 接地カメラ個数
     footPrint.CAMERA_FIRST_ID = 12; // 接地カメラの最小ID
     footPrint.FINISH_FRAME = 600; //何フレームまで実行するか
     footPrint.VIDEO_FPS = 30; // 動画fps
     footPrint.SELECT_TRACKER_BY_CLICKING = false; // tracking対象を手動で指定するか
     footPrint.SHOW_TRACKING_RESULT = false; // tracking結果を表示するか
-    footPrint.CHECKER_BOARD_CALIBRATION = true; // チェッカーボードでキャリブレーション行うか
+//    footPrint.CHECKER_BOARD_CALIBRATION = true; // チェッカーボードでキャリブレーション行うか
     footPrint.PLANE_WIDTH = 150; // 点群領域1辺の1/2
 //    footPrint.AREA_W = 1.5; // 点群領域1辺の1/2
 //    footPrint.AREA_H = 1.5; // 点群領域1辺の1/2
     footPrint.POINT_DIST = 10; // 点群の領域分割幅(mm)
     footPrint.SHOW_TRAJECTORY = true; // trajectory表示
-    footPrint.TARGET_AREA_WIDTH = 1.5; // 可視化領域の横幅(m)
-    footPrint.TARGET_AREA_HEIGHT = 1.5; // 可視化領域の縦幅(px)
+    footPrint.TARGET_AREA_WIDTH = 1.3; // 可視化領域の横幅(m)
+    footPrint.TARGET_AREA_HEIGHT = 1.3; // 可視化領域の縦幅(px)
     footPrint.RESULT_IMAGE_WIDTH = 300; // 俯瞰マップの横幅(px)
     footPrint.RESULT_IMAGE_HEIGHT = 300; // 俯瞰マップの縦幅(m)
     footPrint.SHOW_TRAJECTORY = true; // trajectory表示
@@ -41,7 +44,7 @@ int main() {
     footPrint.ESTIMATE_RT = false; // Rt求めるか
 //    footPrint.SHOW_REPROJECT_RESULT = false; // 点群の再投影結果を表示するか
     footPrint.SHOW_REPROJECT_RESULT = true; // 点群の再投影結果を表示するか
-    footPrint.RIGHT_FOOT_COLOR = cv::Vec3b(0,255,0);
+    footPrint.RIGHT_FOOT_COLOR = cv::Vec3b(0,0,255);
     footPrint.LEFT_FOOT_COLOR = cv::Vec3b(255,0,0);
 
     cv::Mat3f plane = footPrint.generatePointCloudsAsMatrix(footPrint.PLANE_WIDTH, footPrint.POINT_DIST);  //床平面の点群生成
@@ -57,7 +60,6 @@ int main() {
         footPrint.stepMap = cv::Mat::ones(footPrint.PLANE_WIDTH * 2, footPrint.PLANE_WIDTH * 2, CV_8UC3);
         footPrint.HeatMap = cv::Mat::ones(footPrint.PLANE_WIDTH * 2, footPrint.PLANE_WIDTH * 2, CV_8UC3);
         footPrint.HeatVoteMap = cv::Mat::zeros(footPrint.PLANE_WIDTH * 2, footPrint.PLANE_WIDTH * 2, CV_32F);
-        footPrint.ResultInfo = cv::Mat::ones(footPrint.PLANE_WIDTH * 2, footPrint.PLANE_WIDTH * 2, CV_8UC3);
         footPrint.estimateStepWithWebCam();
     }else if(footPrint.USE_HOMOGRAPHY){
         footPrint.estimateStepUsingHomography();
