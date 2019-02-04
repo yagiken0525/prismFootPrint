@@ -557,8 +557,7 @@ void FootPrint::renewStepFlag(const int bdID, cv::Point2f pt){
 void FootPrint::votingToMap(const int x, const int y, const int imID, const int bdID) {
     cv::Mat *voteMap = &voteMapList[bdID % 2];
     int dstChannel = imID % CHANNEL;
-    int stepedListPointer = imID % VISUALIZE_FRAMES;
-    vector<cv::Point2f> stepedPoints = stepedPointList[stepedListPointer];
+    vector<cv::Point2f> *visualizeStepList = &stepedPointList[imID % VISUALIZE_FRAMES];
     cv::Vec3b color = getPointColor(bdID);
     cv::Point2f projectedPt = cv::Point2f(x, y);
 
@@ -573,7 +572,7 @@ void FootPrint::votingToMap(const int x, const int y, const int imID, const int 
             if(sumVecElem(voteMap->at<cv::Vec<unsigned char, CHANNEL>>(stepPt)) >= STEP_THRESHOLD){
                 trajectoryMap.at<cv::Vec3b>(stepPt) = color;
                 stepMap.at<cv::Vec3b>(stepPt) = color;
-                stepedPoints.push_back(stepPt);
+                visualizeStepList->push_back(stepPt);
 //                addNewStep(stepPt, imID);
 
                 if(xIdx == x && yIdx == y){
@@ -588,7 +587,7 @@ void FootPrint::votingToMap(const int x, const int y, const int imID, const int 
 
     //stepMapから一定フレーム前の接地点を消去
 //    deletePrevSteps();
-//    stepedPointList[stepedListPointer] = stepedPoints;
+//    stepedPointList[stepedListPointer] = visualizeStepList;
     prevProjectedPt = projectedPt;
 
 }
@@ -1702,15 +1701,18 @@ void FootPrint::InitStepMaps(OpenPosePerson targetPerson){
         trajectoryMap = overViewImage.clone();
         this->ResultInfo = cv::Mat::zeros(stepMap.rows, stepMap.cols, CV_8UC3);
 
-
         for(int i = 0; i < VISUALIZE_FRAMES; i++) {
             vector<cv::Point2f> ptList;
             stepedPointList.push_back(ptList);
         }
+
+        vector<int> listR;
+        vector<int> listL;
+        stepNumList.push_back(listR);
+        stepNumList.push_back(listL);
     }else{
         this->stepMap = cv::imread(_camera_path + _project_name + "/stepMap.jpg");
         this->trajectoryMap = cv::imread(_camera_path + _project_name + "/trajectoryMap.jpg");
-
     }
     originalStepMap = stepMap.clone();
 
@@ -1990,6 +1992,35 @@ void FootPrint::adjustScaleUsingHomography(){
     cv::waitKey();
 };
 
+void FootPrint::exportPointsCSV() {
+    for(int i=E_LEFT; i <= E_RIGHT; i++){
+        string fileName = (i == E_RIGHT ? "Rpoints.csv" : "Lpoints.csv");
+        vector<cv::Point3f> ptList = (i == E_RIGHT ? RstepList : LstepList);
+        ofstream file(_projects_path + "/" + fileName);
+        for(cv::Point3f pt : ptList){
+            file << pt.x << " " << pt.y << " " << pt.z << endl;
+        }
+        file.close();
+    }
+}
+
+void FootPrint::exportPointsTimeScale() {
+    for(int i=E_LEFT; i <= E_RIGHT; i++){
+        vector<int> stepList = this->stepNumList[i];
+        string fileName = (i == E_RIGHT ? "RstepNumList.txt" : "LstepNumList.txt");
+        ofstream file(_projects_path + "/" + fileName);
+        for(int imID = 0; imID < stepList.size(); imID++) {
+            file << stepList[imID] << endl;
+        }
+        file.close();
+    }
+}
+
+void FootPrint::outputResults(){
+    exportPointsCSV();
+    exportPointsTimeScale();
+}
+
 void FootPrint::estimateStepUsingHomography(){
 
     adjustScaleUsingHomography();
@@ -2003,7 +2034,7 @@ void FootPrint::estimateStepUsingHomography(){
     OpenPosePerson prevTarget;
     OpenPosePerson newTarget;
 
-    int frameID = 0;
+    frameID = 0;
     while (1) {
         capture.read(frame);
         if(!frame.empty()){
@@ -2035,6 +2066,9 @@ void FootPrint::estimateStepUsingHomography(){
         cv::waitKey(1);
     }
     //可視化処理
+    //接地点をファイル出力(x,y,t)
+    outputResults();
+
 }
 
 
@@ -2457,15 +2491,20 @@ void FootPrint::vote(Camera* cm, cv::Point2f pt, const int imID, const int bdID)
 void FootPrint::voteToStepMap(OpenPosePerson target, const int imID, const int footID){
     //Visualize
     int stepedListPointer = imID % VISUALIZE_FRAMES;
-    vector<cv::Point2f> stepedPoints = stepedPointList[stepedListPointer];
-    int dstChannel = imID % CHANNEL;
+    int deleteListPointer = (imID + 1) % VISUALIZE_FRAMES;
+    vector<cv::Point2f> visualizeStepList = stepedPointList[stepedListPointer];
 
+    //左右で処理を変更
     cv::Point2f pt = (footID == E_RIGHT ? target.rFoot : target.lFoot);
+    vector<cv::Point3f>* stepList = (footID == E_RIGHT ? &RstepList : &LstepList);
     cv::Mat *voteMap = &voteMapList[footID];
     cv::Vec3b color = getPointColor(footID);
     cv::Point2f warpPt = warpPoint(pt, warpH);
+    int preStepNum = stepList->size();
+    int voteNumSum = 0;
 
     //近傍VOTE_RANGE分に投票
+    int dstChannel = imID % CHANNEL;
     for (int i = 0; i < VOTE_RANGE; i++) {
         for (int j = 0; j < VOTE_RANGE; j++) {
             int xIdx = int(warpPt.x + i - (VOTE_RANGE / 2));
@@ -2479,18 +2518,25 @@ void FootPrint::voteToStepMap(OpenPosePerson target, const int imID, const int f
                 //投票数がしきい値超えていればそのpxを接地点とみなす
                 if (sumVecElem(voteMap->at<cv::Vec<unsigned char, CHANNEL>>(stepPt)) >= STEP_THRESHOLD) {
                     stepMap.at<cv::Vec3b>(stepPt) = color;
-                    stepedPoints.push_back(stepPt);
+                    visualizeStepList.push_back(stepPt);
+                    stepList->push_back(cv::Point3f(stepPt.x, stepPt.y, imID));
+//                    voteNumSum += sumVecElem(voteMap->at<cv::Vec<unsigned char, CHANNEL>>(stepPt));
                 }
             }
         }
         //voteMapの該当チャンネルを初期化
         initVoteChannel(dstChannel, voteMap);
     }
-//    //stepMapから一定フレーム前の接地点を消去
-//    for (cv::Point2f pt : stepedPointList[stepedListPointer]) {
-//        stepMap.at<cv::Vec3b>(pt) = originalStepMap.at<cv::Vec3b>(pt);
-//    }
-    stepedPointList[stepedListPointer] = stepedPoints;
+
+    int stepVoteValue = (stepList->size() - preStepNum);
+//    stepVoteValue*=voteNumSum;
+//    stepVoteValue = (stepVoteValue>10000 ? stepVoteValue : 0);
+    stepNumList[footID].push_back(stepVoteValue);
+    //stepMapから一定フレーム前の接地点を消去
+    for (cv::Point2f pt : stepedPointList[deleteListPointer]) {
+        stepMap.at<cv::Vec3b>(pt) = originalStepMap.at<cv::Vec3b>(pt);
+    }
+    stepedPointList[stepedListPointer] = visualizeStepList;
 }
 
 void FootPrint::EstimateStep(OpenPosePerson target, const int imID) {
@@ -2501,7 +2547,7 @@ void FootPrint::EstimateStep(OpenPosePerson target, const int imID) {
 void FootPrint::voteForHomography(OpenPosePerson target, const int imID) {
 
     int stepedListPointer = imID % VISUALIZE_FRAMES;
-    vector<cv::Point2f> stepedPoints = stepedPointList[stepedListPointer];
+    vector<cv::Point2f> visualizeStepList = stepedPointList[stepedListPointer];
     int dstChannel = imID % CHANNEL;
 
 
@@ -2527,7 +2573,7 @@ void FootPrint::voteForHomography(OpenPosePerson target, const int imID) {
                         //投票数がしきい値超えていれば
                         if (sumVecElem(voteMap->at<cv::Vec<unsigned char, CHANNEL>>(stepPt)) >= STEP_THRESHOLD) {
                             stepMap.at<cv::Vec3b>(stepPt) = color;
-                            stepedPoints.push_back(stepPt);
+                            visualizeStepList.push_back(stepPt);
 
                             //かかとの点で歩数としてカウントするか決定
                             if (!stepped) {
@@ -2565,7 +2611,7 @@ void FootPrint::voteForHomography(OpenPosePerson target, const int imID) {
         stepMap.at<cv::Vec3b>(pt) = originalStepMap.at<cv::Vec3b>(pt);
 //        trajectoryMap.at<cv::Vec3b>(pt) = originalStepMap.at<cv::Vec3b>(pt);
     }
-    stepedPointList[stepedListPointer] = stepedPoints;
+    stepedPointList[stepedListPointer] = visualizeStepList;
 
     //StepFlagのリセット
     rightStepFlag.clear();

@@ -79,10 +79,11 @@ public:
         cv::Point2f stepPosition;
     };
     std::vector<StepInfo> stepInfoList;
-
+    std::vector<std::vector<int>> stepNumList;
     std::vector<FootPrint::CameraInfo> CameraInfoList;
 
     //しきい値
+    int frameID;
     int FOOTSIZE;
     cv::Mat leftFootIm;
     cv::Mat rightFootIm;
@@ -151,6 +152,9 @@ public:
     void estimateStepUsingHomography();
     void getBackGroundImage();
     void cropStepMap();
+    void exportPointsCSV();
+    void exportPointsTimeScale();
+    void outputResults();
     void generateOverViewImage(Camera &cm);
     void showAxis(Camera & cm);
     void loadFootImages();
@@ -223,6 +227,8 @@ public:
     float walkingDistance;
     int numOfSteps;
     std::vector<std::vector<cv::Point2f>> stepedPointList;
+    std::vector<cv::Point3f> RstepList;
+    std::vector<cv::Point3f> LstepList;
     std::vector<cv::Mat> voteMapList;
     cv::Mat trajectoryMap;
     cv::Mat stepMap;

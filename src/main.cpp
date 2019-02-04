@@ -17,10 +17,10 @@ int main() {
     footPrint.IMAGE_WIDTH = 640;
 //    footPrint.RESULT_SCALE = 0.2; // 接地判定のための投票数しきい値
     footPrint.SHOW_IMAGE_PATH = "../Data/Images/shows/";
-    footPrint.STEP_THRESHOLD = 4; // 接地判定のための投票数しきい値
-    footPrint.VOTE_RANGE = 15; // 近接何ピクセルまで投票するか(px)
+    footPrint.STEP_THRESHOLD = 5; // 接地判定のための投票数しきい値
+    footPrint.VOTE_RANGE = 5; // 近接何ピクセルまで投票するか(px)
     footPrint.MIN_STRIDE = 30; // 一歩とカウントする際の最小歩幅(cm)
-    footPrint.VISUALIZE_FRAMES = 3000; // 近傍何フレーム分の接地点を表示するか
+    footPrint.VISUALIZE_FRAMES = 50; // 近傍何フレーム分の接地点を表示するか
     footPrint.CAMERA_NUM = 1; // 接地カメラ個数
     footPrint.CAMERA_FIRST_ID = 12; // 接地カメラの最小ID
     footPrint.FINISH_FRAME = 600; //何フレームまで実行するか
